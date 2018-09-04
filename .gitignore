@@ -1,0 +1,6 @@
+*.o
+*.png
+triangles
+test
+.DS_Store
+
