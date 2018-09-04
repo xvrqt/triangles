@@ -1,6 +1,6 @@
 NAME = triangles
 TEST_NAME = test
-OBJS = cli.o image.o lodepng.o
+OBJS = cli.o image.o triangle.o
 CC = clang++
 CCFLAGS = -Wall -std=c++11 -Wc++11-extensions -c 
 IMAGE_MAGICK = `Magick++-config --cxxflags --cppflags --ldflags --libs`
@@ -22,6 +22,9 @@ cli.o: cli.h cli.cpp
 
 image.o: image.h image.cpp
 	$(CC) $(CCFLAGS) $(IMAGE_MAGICK) image.cpp
+
+triangle.o: triangle.h triangle.cpp
+	$(CC) $(CCFLAGS) triangle.cpp
 
 # Utility
 clean: 

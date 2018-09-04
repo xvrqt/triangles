@@ -9,3 +9,4 @@
 
 #include "cli.h"
 #include "image.h"
+#include "triangle.h"
