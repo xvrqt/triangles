@@ -1,9 +1,33 @@
 #include "artist.h"
 
+/* Static member initialization */
+std::independent_bits_engine<std::default_random_engine, 8, unsigned char> Artist::rand_byte_generator;
+double Artist::crossover_chance = 0.7;
+
+/* Set up the static random byte generator */
+void Artist::initializeRandomByteGenerator(size_t RANDOM_SEED)
+{
+  std::default_random_engine rand_engine(RANDOM_SEED);
+  std::independent_bits_engine<std::default_random_engine, 8, unsigned char> dummy(rand_engine);
+  Artist::rand_byte_generator = dummy;
+}
+
+/* Set the crossover chance */
+void Artist::initializeCrossoverChance(double chance)
+{
+  if(chance >= 0 && chance <= 1) { Artist::crossover_chance = chance; }
+  else 
+  { 
+    std::cerr << "Crossover chance must be between 0.0 and 1.0.\nChance \
+                  provided: " << chance << std::endl;
+    exit(1);
+  }
+}
+
 /* Generates an artist with a random genotype, with only the first
    triangle set as visible.
  */
-Artist::Artist(size_t GENOME_LENGTH, std::independent_bits_engine<std::default_random_engine, 8, unsigned char> rand_byte_generator)
+Artist::Artist(size_t GENOME_LENGTH)
 {
   /* Create a byte array to hold the RGB for the background color, and the
      coordinates/colors of all the triangles.
@@ -31,6 +55,9 @@ Artist::Artist(size_t GENOME_LENGTH, std::independent_bits_engine<std::default_r
     dominant[i].visible = (i == 0) ? 7 : 0;
     recessive[i].visible = 0;
   }
+
+  /* Set the fitness to 0 */
+  fitness = 0;
 }
 
 /* Destructor */
@@ -41,7 +68,7 @@ Artist::~Artist()
 }
 
 /* Expresses the genotype, compares it to the submitted image and scores
- * it based on similarity.
+ * it based on similarity. Sets and returns the fitness.
  */
 double Artist::score(const Magick::Image & source)
 {
@@ -100,10 +127,11 @@ double Artist::score(const Magick::Image & source)
 
   /* Draw the triangles! */
   canvas.draw(triangle_list);
-  canvas.write("testing_resources/test_canvas.png");
+  // canvas.write("testing_resources/test_canvas.png");
 
   /* The current fitness function is only the RMSE between the source and the 
     newly drawn image.
    */
-  return canvas.compare(source, Magick::RootMeanSquaredErrorMetric);
+  fitness = canvas.compare(source, Magick::RootMeanSquaredErrorMetric);
+  return fitness;
 }

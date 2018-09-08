@@ -74,16 +74,15 @@ int main(int argc, char ** argv)
 	if(sizeof(Triangle) != 12) { std::cout << "Triangle is not packed correctly; is " << sizeof(Triangle) << " bytes, should be 12."; }
 
 	/* Setup the random bit engines */
-    std::default_random_engine rand_engine(RANDOM_SEED);
-	std::independent_bits_engine<std::default_random_engine, 8, unsigned char> rand_byte_generator(rand_engine);
+ 	Artist::initializeRandomByteGenerator(RANDOM_SEED);
 	
 	/* Generate a random artist, calculate the fitness, and then delete it */
 	{
-		Artist a(GENOME_LENGTH, rand_byte_generator);
+		Artist a(GENOME_LENGTH);
 	}
 
 	/* Generate a random artist and then draw it */
-	Artist a(GENOME_LENGTH, rand_byte_generator);
+	Artist a(GENOME_LENGTH);
 	double score = a.score(source);
 	std::cout << "Score: " << score << std::endl;
 

@@ -6,6 +6,8 @@
 #include <string.h>
 #include <getopt.h>
 
+#include <string>
+
 /* Path to the image that the artist is to draw */
 extern char * IMAGE_PATH;
 
@@ -22,6 +24,9 @@ extern size_t GENERATIONS;
 
 /* srand() seed for repeatable testing. Defaults to 0. */
 extern unsigned int RANDOM_SEED;
+
+/* Chance for a diploid chromosome to crossover. Defaults to 0.7. */
+extern double XOVER_CHANCE;
 
 /* Puts all the arguments into the variables */
 void parseArgs(int argc, char ** argv);

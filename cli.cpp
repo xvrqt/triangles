@@ -15,6 +15,9 @@ size_t GENERATIONS = 0;
 /* srand() seed for repeatable testing */
 unsigned int RANDOM_SEED = 0;
 
+/* Chance for a diploid chromosome to crossover. */
+double XOVER_CHANCE = 0.7;
+
 void parseArgs(int argc, char ** argv)
 {
     int c;
@@ -27,6 +30,7 @@ void parseArgs(int argc, char ** argv)
             {"population-size",     required_argument, 0, 'p'},
             {"generations",         required_argument, 0, 'n'},
             {"random-seed",         required_argument, 0, 'r'},
+            {"crossover-chance",    required_argument, 0, 'x'},
             {0, 0, 0, 0}
         };
 
@@ -34,7 +38,7 @@ void parseArgs(int argc, char ** argv)
         int option_index = 0;
 
         /* Short codes for characters */
-        const char * short_options = "i:g:p:n:r:";
+        const char * short_options = "i:g:p:n:r:x:";
 
         c = getopt_long(argc, argv, short_options, long_options, &option_index);
 
@@ -96,8 +100,16 @@ void parseArgs(int argc, char ** argv)
                 break;
             }
             case 'r': {
-                printf("%s\n", optarg);
                 RANDOM_SEED = atoi(optarg); 
+                break;
+            }
+            case 'x': {
+                XOVER_CHANCE = std::stod(optarg);
+                if(XOVER_CHANCE < 0 || XOVER_CHANCE > 1)
+                { 
+                    printf("Crossover chance must be between 0.0 and 1.0.\nChance provided:%f", XOVER_CHANCE);
+                    exit(1);
+                }
                 break;
             }
             case '?': {
@@ -108,6 +120,8 @@ void parseArgs(int argc, char ** argv)
             }
         }
     }
+
+  
 
     /* Remainning non-option arguments */
 

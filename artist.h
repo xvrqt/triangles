@@ -42,11 +42,20 @@ class Artist
   /* The genetic information */
   Chromosome chromosome;
 
+  /* Fitnesss of the Artist */
+  double fitness;
+
+  /* Static random engine */
+  static std::independent_bits_engine<std::default_random_engine, 8, unsigned char> rand_byte_generator;
+
+  /* Chance to cross over */
+  static double crossover_chance;
+
     public:
       /* Generates an artist with a random genotype, with only the first
         triangle set as visible.
        */
-      Artist(size_t GENOME_LENGTH, std::independent_bits_engine<std::default_random_engine, 8, uint8_t> rand_byte_generator);
+      Artist(size_t GENOME_LENGTH);
       
       /* Clean up the very obvious sources of memory leaks (chromosome) */
       ~Artist();
@@ -55,6 +64,14 @@ class Artist
        * it based on similarity.
        */
       double score(const Magick::Image & source);
+
+      /* Performs crossover on the chromosome */
+
+      /* Seed the random byte generator */
+      static void initializeRandomByteGenerator(size_t RANDOM_SEED);
+
+      /* Set the crossover chance */
+      static void initializeCrossoverChance(double chance);
 };
 
 #endif
