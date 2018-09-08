@@ -67,6 +67,7 @@ int main(int argc, char ** argv)
 
 	assert(t == t_clone);
 	assert(!(t == t_diff));
+	std::cout << "Triangle equality working correctly!" << std::endl;
 
 	/* Test generating random bits and drawing them */
 	/* Check packing of triangle struct */

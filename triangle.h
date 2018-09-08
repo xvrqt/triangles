@@ -4,9 +4,8 @@
 #include <cstdlib>
 
 /*
-     8         8         8          8          10          10          10          10          10          10
-[rrrrrrrr][gggggggg][bbbbbbbb]|[aaaaaaaa]|[xxxxxxxxxx][yyyyyyyyyy][xxxxxxxxxx][yyyyyyyyyy][xxxxxxxxxx][yyyyyyyyyy][v][øøø]
-[           colors           ]|[opacity ]|[                                points                                ][show][ø]
+[xxxxxxxxxx][yyyyyyyyyy][xxxxxxxxxx][yyyyyyyyyy][xxxxxxxxxx][yyyyyyyyyy]|[vvvv]|[rrrrrrrr][gggggggg][bbbbbbbb]|[aaaaaaaa]
+[                                points                                ]|[show]|[           colors           ]|[opacity ]
 
 Total size: 12 bytes (3 bits unsued at the end)
 Packed to preserve alignment.
@@ -25,8 +24,10 @@ struct __attribute__((__packed__)) Triangle {
   unsigned short x3 : 10;
   unsigned short y3 : 10;
 
-  /* If the triangle is visible or not */
-  bool visible : 1;
+  /* The triangle with the higher visible value is drawn. A value of 0 is not 
+     drawn. Equal values are broken in a consistent manner.
+   */
+  uint8_t visible : 4;
 
   /* Align to the next byte, don't split so the chars are easier to read */
   unsigned : 0;

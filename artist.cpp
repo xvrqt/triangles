@@ -27,8 +27,9 @@ Artist::Artist(size_t GENOME_LENGTH, std::independent_bits_engine<std::default_r
   Triangle * recessive = (Triangle *)(chromosome.recessive + TRIANGLE_LIST_BEGIN);
   for(size_t i = 0; i < GENOME_LENGTH; i++)
   {
-    dominant[i].visible = (i == 0) ? true : false;
-    recessive[i].visible = false;
+    /* 0111 - more mutation resiliant */
+    dominant[i].visible = (i == 0) ? 7 : 0;
+    recessive[i].visible = 0;
   }
 }
 
@@ -72,52 +73,37 @@ double Artist::score(const Magick::Image & source)
     Triangle tri_dom = dominant[i];
     Triangle tri_rec = recessive[i];
     
-    /* Add to an array that we can loop through and break early if the
-      Triangles on the dom/rec genes are equal.
-     */
-    Triangle triangles[2];
-    triangles[0] = tri_dom;
-    triangles[1] = tri_rec;
+    /* Draw the triangle with the higher visible parameter */
+    Triangle tri = (tri_dom.visible >= tri_rec.visible) ? tri_dom : tri_rec;
+    
+    /* If both triangles were visibilty 0; draw neither */
+    if(tri.visible == 0) { continue; }
+    
+    /* Transform the triangle into a DrawablePolygons */      
+    /* Translate the coordinates */
+    Magick::CoordinateList coordinates;
+    coordinates.push_back(Magick::Coordinate(tri.x1,tri.y1));
+    coordinates.push_back(Magick::Coordinate(tri.x2,tri.y2));
+    coordinates.push_back(Magick::Coordinate(tri.x3,tri.y3));
+    Magick::DrawablePolyline drawable_triangle(coordinates);
 
-    /* Transform the triangles into DrawablePolygons */
-    for(size_t j = 0; j < 2; j++)
-    {
-      Triangle tri = triangles[j];
+    /* Set the fill/stroke color */
+    Magick::Color color(tri.r, tri.g, tri.b, tri.a);
+    canvas.strokeColor(color);
+    canvas.fillColor(color);
 
-      /* Don't draw triangles that are not visible */
-      if(tri.visible)
-      {
-        /* Translate the coordinates */
-        Magick::CoordinateList coordinates;
-        coordinates.push_back(Magick::Coordinate(tri.x1,tri.y1));
-        coordinates.push_back(Magick::Coordinate(tri.x2,tri.y2));
-        coordinates.push_back(Magick::Coordinate(tri.x3,tri.y3));
-        Magick::DrawablePolyline drawable_triangle(coordinates);
-
-        /* Set the fill/stroke color */
-        Magick::Color color(tri.r, tri.g, tri.b, tri.a);
-        canvas.strokeColor(color);
-        canvas.fillColor(color);
-
-        /* Push the colors and then the shape onto the drawable lsit */
-        triangle_list.push_back(Magick::DrawableFillColor(color));
-        triangle_list.push_back(Magick::DrawableStrokeColor(color));
-        triangle_list.push_back(drawable_triangle);
-      }
-
-      /* If the dominant/recessive triangles are the same, don't draw the
-        recessive triangle as it is redundant.
-       */
-      if(tri_dom == tri_rec) { break; }
-    }
+    /* Push the colors and then the shape onto the drawable lsit */
+    triangle_list.push_back(Magick::DrawableFillColor(color));
+    triangle_list.push_back(Magick::DrawableStrokeColor(color));
+    triangle_list.push_back(drawable_triangle);
   }
 
   /* Draw the triangles! */
   canvas.draw(triangle_list);
+  canvas.write("testing_resources/test_canvas.png");
 
-  /* Compare to the original */
-  canvas.verbose(true);
-
-  /* The current fitness function is only the PPME */
+  /* The current fitness function is only the RMSE between the source and the 
+    newly drawn image.
+   */
   return canvas.compare(source, Magick::RootMeanSquaredErrorMetric);
 }

@@ -3,9 +3,7 @@
 /* The image we're operating on */
 char * IMAGE_PATH = 0;
 
-/* Minimum number of triangles to attempt to draw the image with. Since the 
-   chromosomes are diploid, the maximum amount of triangles is double this.
- */
+/* Maximum number of triangles to attempt to draw the image with. */
 size_t GENOME_LENGTH = 10;
 
 /* Number of artists in each generation */

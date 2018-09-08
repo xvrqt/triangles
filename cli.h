@@ -9,9 +9,7 @@
 /* Path to the image that the artist is to draw */
 extern char * IMAGE_PATH;
 
-/* Minimum number of triangles to attempt to draw the image with. Since the 
-   chromosomes are diploid, the maximum amount of triangles is double this.
- */
+/* Maximum number of triangles to attempt to draw the image with. */
 extern size_t GENOME_LENGTH;
 
 /* Number of artists in each generation. Must be a square number. 
