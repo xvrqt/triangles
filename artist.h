@@ -7,7 +7,6 @@
 #include "image.h"
 #include "triangle.h"
 
-#include <list>
 #include <vector>
 #include <random>
 #include <string>
@@ -55,7 +54,7 @@ class Artist
       /* Expresses the genotype, compares it to the submitted image and scores
        * it based on similarity.
        */
-      double score(Magick::Image source);
+      double score(const Magick::Image & source);
 };
 
 #endif

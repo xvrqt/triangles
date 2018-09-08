@@ -42,7 +42,7 @@ Artist::~Artist()
 /* Expresses the genotype, compares it to the submitted image and scores
  * it based on similarity.
  */
-double Artist::score(Magick::Image source)
+double Artist::score(const Magick::Image & source)
 {
   /* Extract the source dimensions */
   std::string source_width(std::to_string(source.columns()));
@@ -115,7 +115,9 @@ double Artist::score(Magick::Image source)
   /* Draw the triangles! */
   canvas.draw(triangle_list);
 
-  canvas.write("testing_resources/test_canvas.png");
+  /* Compare to the original */
+  canvas.verbose(true);
 
-  return 0.0;
+  /* The current fitness function is only the PPME */
+  return canvas.compare(source, Magick::RootMeanSquaredErrorMetric);
 }

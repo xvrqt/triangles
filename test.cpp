@@ -83,6 +83,7 @@ int main(int argc, char ** argv)
 
 	/* Generate a random artist and then draw it */
 	Artist a(GENOME_LENGTH, rand_byte_generator);
-	a.score(source);
+	double score = a.score(source);
+	std::cout << "Score: " << score << std::endl;
 
 }
