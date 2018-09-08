@@ -31,6 +31,9 @@ extern unsigned int RANDOM_SEED;
 /* Chance for a diploid chromosome to crossover. Defaults to 0.7. */
 extern double XOVER_CHANCE;
 
+/* Chance, per bit, of being flipped each generation. Defaults to 0.005. */
+extern double MUTATION_RATE;
+
 /* Puts all the arguments into the variables */
 void parseArgs(int argc, char ** argv);
 

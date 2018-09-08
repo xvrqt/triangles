@@ -12,6 +12,7 @@ int main(int argc, char ** argv)
 
 	/* Initialize Artist settings with runtime parameters. */
 	Artist::initializeGenomeLength(GENOME_LENGTH);
+	Artist::initializeMutationRate(MUTATION_RATE);
 	Artist::initializeCrossoverChance(XOVER_CHANCE);
 	Artist::initializeRandomByteGenerator(RANDOM_SEED);
 
@@ -38,11 +39,13 @@ int main(int argc, char ** argv)
 		for(auto a = artists.begin(); a != artists.end(); ++a)
 		{
 			(*a).crossover();
+			(*a).mutate();
+			(*a).score(source);
 		}
 
-		/* Crossover the genes */
-		/* Mutate */
-		/* Score */
+		/* Sort the artists from best to worst */
+		std::sort(artists.begin(), artists.end());
+
 		/* Mate */
 	}
 

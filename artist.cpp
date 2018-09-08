@@ -1,16 +1,18 @@
 #include "artist.h"
 
 /* Static member initialization */
+std::default_random_engine Artist::rand_engine;
 std::independent_bits_engine<std::default_random_engine, 8, unsigned char> Artist::rand_byte_generator;
 double Artist::crossover_chance = 0.7;
+double Artist::mutation_rate = 0.005;
 size_t Artist::number_of_triangles = 10;
 size_t Artist::genome_length = (Artist::number_of_triangles * sizeof(Triangle) + 4 * sizeof(uint8_t));
 
 /* Set up the static random byte generator */
 void Artist::initializeRandomByteGenerator(size_t RANDOM_SEED)
 {
-  std::default_random_engine rand_engine(RANDOM_SEED);
-  std::independent_bits_engine<std::default_random_engine, 8, unsigned char> dummy(rand_engine);
+  Artist::rand_engine.seed(RANDOM_SEED);
+  std::independent_bits_engine<std::default_random_engine, 8, unsigned char> dummy(Artist::rand_engine);
   Artist::rand_byte_generator = dummy;
 }
 
@@ -22,6 +24,18 @@ void Artist::initializeCrossoverChance(double XOVER_CHANCE)
   { 
     std::cerr << "Crossover chance must be between 0.0 and 1.0.\nChance \
                   provided: " << XOVER_CHANCE << std::endl;
+    exit(1);
+  }
+}
+
+/* Set the mutation rate */
+void Artist::initializeMutationRate(double MUTATION_RATE)
+{
+  if(MUTATION_RATE >= 0 && MUTATION_RATE <= 1) { Artist::mutation_rate = MUTATION_RATE; }
+  else 
+  { 
+    std::cerr << "Mutation rate must be between 0.0 and 1.0.\nRate \
+                  provided: " << MUTATION_RATE << std::endl;
     exit(1);
   }
 }
@@ -74,58 +88,6 @@ Artist::~Artist()
 {
   free(chromosome.dominant);
   free(chromosome.recessive);
-}
-
-/* Take a random double between [0,1] - if lower than or equal to 
-  crossover_chance, swap part of the dominant and recessive genomes. The index
-  to swap from is draw from an equal distribution from the 0th bit to the 
-  last bit.
- */
-void Artist::crossover()
-{
-  /* Only crossover $(crossover_chance)% of the time */
-  double rand_zero_to_one = (double)(rand()/RAND_MAX);
-  if(rand_zero_to_one < Artist::crossover_chance)
-  {
-      /* Pick a bit to crossover at */
-      size_t genome_bit_length = Artist::genome_length * 8;
-      double div = (RAND_MAX/(genome_bit_length - 1));
-      size_t bit_index = (size_t)(std::floor(((double)rand()/div)));
-
-      /* Determine the byte index and swap the bytes in the range: 
-         [(byte_index + 1), genome_length].
-       */
-      size_t byte_index = bit_index / 8;
-      /* There are no bytes to copy when crossover happens in the last byte */
-      if(byte_index >= (genome_length - 1))
-      {
-        /* Number of bytes to swap */
-        size_t swap_size = genome_length - byte_index - 1;
-        uint8_t * byte_swap_space = (uint8_t *)malloc(sizeof(uint8_t) * swap_size);
-        memcpy(byte_swap_space, (chromosome.dominant + byte_index + 1), swap_size);
-        memcpy((chromosome.dominant + byte_index + 1), (chromosome.recessive + byte_index + 1), swap_size);
-        memcpy((chromosome.recessive + byte_index + 1), byte_swap_space, swap_size);
-      }
-
-      /* For the byte that is split, swap the bits */
-      uint8_t dom_byte = chromosome.dominant[byte_index];
-      uint8_t rec_byte = chromosome.recessive[byte_index];
-      uint8_t intra_byte_index = bit_index % 8;
-      uint8_t num_bits = 8 - intra_byte_index;
-
-      /* Prepare the bytes for writing to */
-      uint8_t mask1 = (uint8_t)GETMASK(intra_byte_index, num_bits);
-      chromosome.dominant[byte_index] |= mask1;
-      chromosome.recessive[byte_index] |= mask1;
-
-      /* Prepare the bits to be written */
-      uint8_t dom_bits = (dom_byte & mask1) | (~mask1);
-      uint8_t rec_bits = (rec_byte & mask1) | (~mask1);
-
-      /* Write the bits to the byte */
-      chromosome.dominant[byte_index] &= rec_bits;
-      chromosome.recessive[byte_index] &= dom_bits;
-  }
 }
 
 /* Expresses the genotype, compares it to the submitted image and scores
@@ -195,4 +157,89 @@ double Artist::score(const Magick::Image & source)
    */
   fitness = canvas.compare(source, Magick::RootMeanSquaredErrorMetric);
   return fitness;
+}
+
+/* Take a random double between [0,1] - if lower than or equal to 
+  crossover_chance, swap part of the dominant and recessive genomes. The index
+  to swap from is draw from an equal distribution from the 0th bit to the 
+  last bit.
+ */
+void Artist::crossover()
+{
+  /* Only crossover $(crossover_chance)% of the time */
+  double rand_zero_to_one = (double)(rand()/RAND_MAX);
+  if(rand_zero_to_one < Artist::crossover_chance)
+  {
+      /* Pick a bit to crossover at */
+      size_t genome_bit_length = Artist::genome_length * 8;
+      double div = (RAND_MAX/(genome_bit_length - 1));
+      size_t bit_index = (size_t)(std::floor(((double)rand()/div)));
+
+      /* Determine the byte index and swap the bytes in the range: 
+         [(byte_index + 1), genome_length].
+       */
+      size_t byte_index = bit_index / 8;
+      /* There are no bytes to copy when crossover happens in the last byte */
+      if(byte_index >= (genome_length - 1))
+      {
+        /* Number of bytes to swap */
+        size_t swap_size = genome_length - byte_index - 1;
+        uint8_t * byte_swap_space = (uint8_t *)malloc(sizeof(uint8_t) * swap_size);
+        memcpy(byte_swap_space, (chromosome.dominant + byte_index + 1), swap_size);
+        memcpy((chromosome.dominant + byte_index + 1), (chromosome.recessive + byte_index + 1), swap_size);
+        memcpy((chromosome.recessive + byte_index + 1), byte_swap_space, swap_size);
+      }
+
+      /* For the byte that is split, swap the bits */
+      uint8_t dom_byte = chromosome.dominant[byte_index];
+      uint8_t rec_byte = chromosome.recessive[byte_index];
+      uint8_t intra_byte_index = bit_index % 8;
+      uint8_t num_bits = 8 - intra_byte_index;
+
+      /* Prepare the bytes for writing to */
+      uint8_t mask1 = (uint8_t)GETMASK(intra_byte_index, num_bits);
+      chromosome.dominant[byte_index] |= mask1;
+      chromosome.recessive[byte_index] |= mask1;
+
+      /* Prepare the bits to be written */
+      uint8_t dom_bits = (dom_byte & mask1) | (~mask1);
+      uint8_t rec_bits = (rec_byte & mask1) | (~mask1);
+
+      /* Write the bits to the byte */
+      chromosome.dominant[byte_index] &= rec_bits;
+      chromosome.recessive[byte_index] &= dom_bits;
+  }
+}
+
+/* Chance to flip some of the bits */
+void Artist::mutate()
+{
+  /* Create a binomial distribution to detect the number of mutations */
+  size_t num_bits = 8 * genome_length * 2; /* 2 because diploid chromosome */
+  std::binomial_distribution<size_t> distribution(num_bits, MUTATION_RATE);
+  size_t num_mutations = distribution(Artist::rand_engine);
+
+  /* Selecte a random bit to flip per mutation. */
+  std::uniform_int_distribution<size_t> bit_selector(0, (num_bits - 1));
+  for(size_t i = 0; i < num_mutations; i++)
+  {
+    /* Indices into the bits & bytes */
+    size_t bit_index = bit_selector(Artist::rand_engine);
+    size_t byte_index = bit_index / 8;
+    uint8_t intra_byte_index = bit_index % 8;
+
+    /* Select which genome to operate on. Dominant|Recessive */
+    uint8_t * genome = (byte_index >= genome_length) ? chromosome.dominant : chromosome.recessive;
+    byte_index %= genome_length;
+
+    /* Flip the bit */
+    uint8_t mask = (uint8_t)GETMASK(intra_byte_index, 1);
+    genome[byte_index] ^= mask;
+  }
+}
+
+/* Allows us to sort without copying */
+bool Artist::operator <(const Artist &a) const
+{
+  return fitness < a.fitness;
 }

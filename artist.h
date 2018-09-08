@@ -19,7 +19,7 @@
 /* Helpful for the bit twiddling */
 #define GETMASK(index, size) (((1 << (size)) - 1) << (index))
 #define READFROM(data, index, size) (((data) & GETMASK((index), (size))) >> (index))
-#define WRITETO(data, index, size, value) ((data) = ((data) & (~GETMASK((index), (size)))) | ((value) << (index)))
+#define WRITETO(data, index, size, value) ((data) = ((data) & (~(uint8_t)GETMASK((index), (size)))) | ((value) << (index)))
 
 
 /* Semantic struct to represent the diploid nature of the genes */
@@ -59,10 +59,14 @@ class Artist
   static size_t genome_length;
 
   /* Static random engine */
+  static std::default_random_engine rand_engine;
   static std::independent_bits_engine<std::default_random_engine, 8, unsigned char> rand_byte_generator;
 
   /* Chance to cross over */
   static double crossover_chance;
+
+  /* Chance, per bit, to be flipped per generation */
+  static double mutation_rate;
 
     public:
       /* Generates an artist with a random genotype, with only the first
@@ -72,6 +76,9 @@ class Artist
       
       /* Clean up the very obvious sources of memory leaks (chromosome) */
       ~Artist();
+
+      /* Allows us to sort without copying */
+      bool operator <(const Artist &a) const;
 
       /* Expresses the genotype, compares it to the submitted image and scores
        * it based on similarity.
@@ -84,17 +91,20 @@ class Artist
        */
       void crossover();
 
+      /* Chance to flip some of the bits */
+      void mutate();
+
       /* Seed the random byte generator */
       static void initializeRandomByteGenerator(size_t RANDOM_SEED);
 
       /* Set the crossover chance */
       static void initializeCrossoverChance(double XOVER_CHANCE);
 
+      /* Set the mutation rate */
+      static void initializeMutationRate(double MUTATION_RATE);
+
       /* Set the max number of triangles, and genome byte length */
       static void initializeGenomeLength(size_t GENOME_LENGTH);
-
-      /* Set the mutation chance */
-
 };
 
 #endif

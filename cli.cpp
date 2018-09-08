@@ -18,6 +18,9 @@ unsigned int RANDOM_SEED = time(NULL);
 /* Chance for a diploid chromosome to crossover. */
 double XOVER_CHANCE = 0.7;
 
+/* Chance, per bit, of being flipped each generation. Defaults to 0.005. */
+double MUTATION_RATE = 0.005;
+
 void parseArgs(int argc, char ** argv)
 {
     int c;
@@ -31,6 +34,7 @@ void parseArgs(int argc, char ** argv)
             {"generations",         required_argument, 0, 'n'},
             {"random-seed",         required_argument, 0, 'r'},
             {"crossover-chance",    required_argument, 0, 'x'},
+            {"mutation-rate",       required_argument, 0, 'm'},
             {0, 0, 0, 0}
         };
 
@@ -38,7 +42,7 @@ void parseArgs(int argc, char ** argv)
         int option_index = 0;
 
         /* Short codes for characters */
-        const char * short_options = "i:g:p:n:r:x:";
+        const char * short_options = "i:g:p:n:r:x:m:";
 
         c = getopt_long(argc, argv, short_options, long_options, &option_index);
 
@@ -108,6 +112,15 @@ void parseArgs(int argc, char ** argv)
                 if(XOVER_CHANCE < 0 || XOVER_CHANCE > 1)
                 { 
                     printf("Crossover chance must be between 0.0 and 1.0.\nChance provided:%f", XOVER_CHANCE);
+                    exit(1);
+                }
+                break;
+            }
+            case 'm': {
+                MUTATION_RATE = std::stod(optarg);
+                if(MUTATION_RATE < 0 || MUTATION_RATE > 1)
+                { 
+                    printf("Mutation rate must be between 0.0 and 1.0.\nRate provided:%f", MUTATION_RATE);
                     exit(1);
                 }
                 break;
