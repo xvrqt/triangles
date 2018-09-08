@@ -8,7 +8,10 @@ int main(int argc, char ** argv)
 	Magick::InitializeMagick(*argv);
 
 	/* Open the Image */
-	Magick::Image source(IMAGE_PATH);
+	Magick::Image source = openImage(IMAGE_PATH);
+
+	/* Generate a list of Artists */
+	
 
 
 }

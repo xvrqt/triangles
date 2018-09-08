@@ -21,7 +21,7 @@ int main(int argc, char ** argv)
 	std::string image_dimensions = source_width + "x" + source_height;
 
 	/* Create a new canvas, same size as the source, but bright red */
-	Magick::Color red(127,0,0,127);
+	Magick::Color red(255,0,0,255);
 	Magick::Image canvas(image_dimensions, red);
 	canvas.write("testing_resources/blank_canvas.png");
 
@@ -44,10 +44,12 @@ int main(int argc, char ** argv)
 	tri.y3 = 0;
 
 	/* Drawing settings */
-	canvas.strokeColor("black");
+	Magick::Color tri_color(tri.r, tri.g, tri.b, tri.a);
+	
+	canvas.fillColor(tri_color);
+	canvas.strokeWidth(0);
+	canvas.strokeColor(tri_color);
 	canvas.strokeAntiAlias(true);
-	canvas.strokeWidth(5);
-	canvas.fillColor(Magick::Color(tri.r, tri.g, tri.b, tri.a));
 
 	/* Draw the shape */
 	Magick::CoordinateList polyline_coordinate_list;
@@ -59,5 +61,23 @@ int main(int argc, char ** argv)
 	canvas.write("testing_resources/triangle.png");
 
 	/* Test generating random bits and drawing them */
+
+	/* Check packing of triangle struct */
+	if(sizeof(Triangle) != 12) { std::cout << "Triangle is not packed correctly; is " << sizeof(Triangle) << " bytes, should be 12."; }
+
+	/* Setup the random bit engines */
+    std::default_random_engine rand_engine(RANDOM_SEED);
+	std::independent_bits_engine<std::default_random_engine, 8, unsigned char> rand_byte_generator(rand_engine);
 	
+	/* Generate a random artist, calculate the fitness, and then delete it */
+	{
+		Artist a(GENOME_LENGTH, rand_byte_generator);
+	}
+
+	/* Generate a random artist and then draw it */
+	Artist a(GENOME_LENGTH, rand_byte_generator);
+	a.score(source);
+
+
+
 }

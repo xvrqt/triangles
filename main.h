@@ -3,3 +3,5 @@
 
 #include "cli.h"
 #include "image.h"
+#include "artist.h"
+#include "triangle.h"

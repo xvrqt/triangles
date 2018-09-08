@@ -25,8 +25,8 @@ void parseArgs(int argc, char ** argv)
         static struct option long_options[] =
         {
             {"image",               required_argument, 0, 'i'},
-            {"genome-length",         required_argument, 0, 'g'},
-            {"population-size",         required_argument, 0, 'p'},
+            {"genome-length",       required_argument, 0, 'g'},
+            {"population-size",     required_argument, 0, 'p'},
             {"generations",         required_argument, 0, 'n'},
             {"random-seed",         required_argument, 0, 'r'},
             {0, 0, 0, 0}
@@ -36,7 +36,7 @@ void parseArgs(int argc, char ** argv)
         int option_index = 0;
 
         /* Short codes for characters */
-        const char * short_options = "i:g:p:n:r";
+        const char * short_options = "i:g:p:n:r:";
 
         c = getopt_long(argc, argv, short_options, long_options, &option_index);
 
@@ -103,6 +103,7 @@ void parseArgs(int argc, char ** argv)
                 break;
             }
             case 'r': {
+                printf("%s\n", optarg);
                 RANDOM_SEED = atoi(optarg); 
                 break;
             }
