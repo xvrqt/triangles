@@ -15,6 +15,9 @@ int main(int argc, char ** argv)
 	Artist::initializeCrossoverChance(XOVER_CHANCE);
 	Artist::initializeRandomByteGenerator(RANDOM_SEED);
 
+	/* Initialize the srand for crossover/mutation decisions */
+	srand(RANDOM_SEED);
+
 	/* Generate a list of Artists */
 	std::vector<Artist> artists;
 	artists.reserve(POPULATION_SIZE); /* Save us reallocating a few times */
@@ -34,7 +37,7 @@ int main(int argc, char ** argv)
 		 */
 		for(auto a = artists.begin(); a != artists.end(); ++a)
 		{
-			(*a);
+			(*a).crossover();
 		}
 
 		/* Crossover the genes */

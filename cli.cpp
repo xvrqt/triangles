@@ -13,7 +13,7 @@ size_t POPULATION_SIZE = 25;
 size_t GENERATIONS = 0;
 
 /* srand() seed for repeatable testing */
-unsigned int RANDOM_SEED = 0;
+unsigned int RANDOM_SEED = time(NULL);
 
 /* Chance for a diploid chromosome to crossover. */
 double XOVER_CHANCE = 0.7;

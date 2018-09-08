@@ -45,18 +45,11 @@ void Artist::initializeGenomeLength(size_t GENOME_LENGTH)
  */
 Artist::Artist()
 {
-  /* Create a byte array to hold the RGB for the background color, and the
-     coordinates/colors of all the triangles.
-   */
-  size_t size_of_bg_rbg = (4 * sizeof(uint8_t));
-  size_t size_of_triangles = (Artist::number_of_triangles * sizeof(Triangle));
-  size_t size_of_genome = size_of_bg_rbg + size_of_triangles;
-
-  chromosome.dominant = (uint8_t *) malloc(size_of_genome);
-  chromosome.recessive = (uint8_t *) malloc(size_of_genome);
+  chromosome.dominant = (uint8_t *) malloc(Artist::genome_length);
+  chromosome.recessive = (uint8_t *) malloc(Artist::genome_length);
 
   /* Randomize the bits in the byte array */
-  for(size_t i = 0; i < (size_of_genome) ; i++)
+  for(size_t i = 0; i < (Artist::genome_length) ; i++)
   {
     chromosome.dominant[i] = rand_byte_generator(); 
     chromosome.recessive[i] = rand_byte_generator(); 
@@ -72,8 +65,8 @@ Artist::Artist()
     recessive[i].visible = 0;
   }
 
-  /* Set the fitness to 0 */
-  fitness = 0;
+  /* Set the fitness as high as possible to ensure it's replaced. */
+  fitness = std::numeric_limits<double>::max();
 }
 
 /* Destructor */
@@ -90,7 +83,49 @@ Artist::~Artist()
  */
 void Artist::crossover()
 {
+  /* Only crossover $(crossover_chance)% of the time */
+  double rand_zero_to_one = (double)(rand()/RAND_MAX);
+  if(rand_zero_to_one < Artist::crossover_chance)
+  {
+      /* Pick a bit to crossover at */
+      size_t genome_bit_length = Artist::genome_length * 8;
+      double div = (RAND_MAX/(genome_bit_length - 1));
+      size_t bit_index = (size_t)(std::floor(((double)rand()/div)));
 
+      /* Determine the byte index and swap the bytes in the range: 
+         [(byte_index + 1), genome_length].
+       */
+      size_t byte_index = bit_index / 8;
+      /* There are no bytes to copy when crossover happens in the last byte */
+      if(byte_index >= (genome_length - 1))
+      {
+        /* Number of bytes to swap */
+        size_t swap_size = genome_length - byte_index - 1;
+        uint8_t * byte_swap_space = (uint8_t *)malloc(sizeof(uint8_t) * swap_size);
+        memcpy(byte_swap_space, (chromosome.dominant + byte_index + 1), swap_size);
+        memcpy((chromosome.dominant + byte_index + 1), (chromosome.recessive + byte_index + 1), swap_size);
+        memcpy((chromosome.recessive + byte_index + 1), byte_swap_space, swap_size);
+      }
+
+      /* For the byte that is split, swap the bits */
+      uint8_t dom_byte = chromosome.dominant[byte_index];
+      uint8_t rec_byte = chromosome.recessive[byte_index];
+      uint8_t intra_byte_index = bit_index % 8;
+      uint8_t num_bits = 8 - intra_byte_index;
+
+      /* Prepare the bytes for writing to */
+      uint8_t mask1 = (uint8_t)GETMASK(intra_byte_index, num_bits);
+      chromosome.dominant[byte_index] |= mask1;
+      chromosome.recessive[byte_index] |= mask1;
+
+      /* Prepare the bits to be written */
+      uint8_t dom_bits = (dom_byte & mask1) | (~mask1);
+      uint8_t rec_bits = (rec_byte & mask1) | (~mask1);
+
+      /* Write the bits to the byte */
+      chromosome.dominant[byte_index] &= rec_bits;
+      chromosome.recessive[byte_index] &= dom_bits;
+  }
 }
 
 /* Expresses the genotype, compares it to the submitted image and scores

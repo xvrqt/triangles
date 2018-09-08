@@ -1,6 +1,7 @@
 #ifndef CLI_H
 #define CLI_H
 
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

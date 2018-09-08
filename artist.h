@@ -13,6 +13,13 @@
 #include <climits>
 #include <cstdlib>
 #include <cstdint>
+#include <cmath>
+#include <limits>
+
+/* Helpful for the bit twiddling */
+#define GETMASK(index, size) (((1 << (size)) - 1) << (index))
+#define READFROM(data, index, size) (((data) & GETMASK((index), (size))) >> (index))
+#define WRITETO(data, index, size, value) ((data) = ((data) & (~GETMASK((index), (size)))) | ((value) << (index)))
 
 
 /* Semantic struct to represent the diploid nature of the genes */
@@ -85,6 +92,9 @@ class Artist
 
       /* Set the max number of triangles, and genome byte length */
       static void initializeGenomeLength(size_t GENOME_LENGTH);
+
+      /* Set the mutation chance */
+
 };
 
 #endif
