@@ -44,10 +44,8 @@ extern size_t BG_COLOR_SIZE;
 extern size_t TRIANGLE_LIST_BEGIN;
 extern size_t TRIANGLE_SIZE;
 
-/* Generates an array of random bits the same size as N triangles. Sets the
-   visible bit to 0 except for the first triangle.
- */
-Triangle * generate_random_triangle_array(size_t n); /* [ delete me ] */
+/* Compare two triangles */
+bool operator==(const Triangle& lhs, const Triangle& rhs);
 
 
 #endif

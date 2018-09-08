@@ -60,8 +60,15 @@ int main(int argc, char ** argv)
 
 	canvas.write("testing_resources/triangle.png");
 
-	/* Test generating random bits and drawing them */
+	/* Test that triangle equality is working */
+	Triangle t = {0,0,0,0,0,0,0,0,0,0};
+	Triangle t_clone = {0,0,0,0,0,0,0,0,0,0};
+	Triangle t_diff = {0,0,0,0,0,1,0,0,0,0}; /* Has y3 = 1 instead of 0 */
 
+	assert(t == t_clone);
+	assert(!(t == t_diff));
+
+	/* Test generating random bits and drawing them */
 	/* Check packing of triangle struct */
 	if(sizeof(Triangle) != 12) { std::cout << "Triangle is not packed correctly; is " << sizeof(Triangle) << " bytes, should be 12."; }
 
@@ -77,7 +84,5 @@ int main(int argc, char ** argv)
 	/* Generate a random artist and then draw it */
 	Artist a(GENOME_LENGTH, rand_byte_generator);
 	a.score(source);
-
-
 
 }

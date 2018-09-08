@@ -7,6 +7,7 @@
 #include "image.h"
 #include "triangle.h"
 
+#include <list>
 #include <vector>
 #include <random>
 #include <string>

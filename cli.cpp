@@ -3,10 +3,10 @@
 /* The image we're operating on */
 char * IMAGE_PATH = 0;
 
-/* Number of triangles to use to attempt to draw the image Because the
-   Chromosomes are diploid, this number must be even.
+/* Minimum number of triangles to attempt to draw the image with. Since the 
+   chromosomes are diploid, the maximum amount of triangles is double this.
  */
-size_t GENOME_LENGTH = 20;
+size_t GENOME_LENGTH = 10;
 
 /* Number of artists in each generation */
 size_t POPULATION_SIZE = 25;
@@ -63,11 +63,6 @@ void parseArgs(int argc, char ** argv)
                 if(g < 0)
                 {
                     printf("The genome length  must be greater than 0.\n");
-                    exit(1);
-                }
-                else if(GENOME_LENGTH % 2 != 0)
-                {
-                    printf("The length of the genome must be an even number.");
                     exit(1);
                 }
                 else
