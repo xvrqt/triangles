@@ -3,6 +3,8 @@
 /* Static member initialization */
 std::independent_bits_engine<std::default_random_engine, 8, unsigned char> Artist::rand_byte_generator;
 double Artist::crossover_chance = 0.7;
+size_t Artist::number_of_triangles = 10;
+size_t Artist::genome_length = (Artist::number_of_triangles * sizeof(Triangle) + 4 * sizeof(uint8_t));
 
 /* Set up the static random byte generator */
 void Artist::initializeRandomByteGenerator(size_t RANDOM_SEED)
@@ -13,27 +15,41 @@ void Artist::initializeRandomByteGenerator(size_t RANDOM_SEED)
 }
 
 /* Set the crossover chance */
-void Artist::initializeCrossoverChance(double chance)
+void Artist::initializeCrossoverChance(double XOVER_CHANCE)
 {
-  if(chance >= 0 && chance <= 1) { Artist::crossover_chance = chance; }
+  if(XOVER_CHANCE >= 0 && XOVER_CHANCE <= 1) { Artist::crossover_chance = XOVER_CHANCE; }
   else 
   { 
     std::cerr << "Crossover chance must be between 0.0 and 1.0.\nChance \
-                  provided: " << chance << std::endl;
+                  provided: " << XOVER_CHANCE << std::endl;
     exit(1);
   }
+}
+
+/* Set the max number of triangles, and genome byte length */
+void Artist::initializeGenomeLength(size_t GENOME_LENGTH)
+{
+  /* The CLI parameter "GENOME_LENGTH" actually specifys the number of 
+     triangles. This is because the user won't know how many bytes to specify.
+   */
+  Artist::number_of_triangles = GENOME_LENGTH;
+
+  /* Calculate the byte length */
+  size_t size_of_bg_rbg = (4 * sizeof(uint8_t));
+  size_t size_of_triangles = (Artist::number_of_triangles * sizeof(Triangle));
+  Artist::genome_length = size_of_bg_rbg + size_of_triangles;
 }
 
 /* Generates an artist with a random genotype, with only the first
    triangle set as visible.
  */
-Artist::Artist(size_t GENOME_LENGTH)
+Artist::Artist()
 {
   /* Create a byte array to hold the RGB for the background color, and the
      coordinates/colors of all the triangles.
    */
   size_t size_of_bg_rbg = (4 * sizeof(uint8_t));
-  size_t size_of_triangles = (GENOME_LENGTH * sizeof(Triangle));
+  size_t size_of_triangles = (Artist::number_of_triangles * sizeof(Triangle));
   size_t size_of_genome = size_of_bg_rbg + size_of_triangles;
 
   chromosome.dominant = (uint8_t *) malloc(size_of_genome);
@@ -49,7 +65,7 @@ Artist::Artist(size_t GENOME_LENGTH)
   /* Go through and ensure only the first triangle is visible */
   Triangle * dominant = (Triangle *)(chromosome.dominant + TRIANGLE_LIST_BEGIN);
   Triangle * recessive = (Triangle *)(chromosome.recessive + TRIANGLE_LIST_BEGIN);
-  for(size_t i = 0; i < GENOME_LENGTH; i++)
+  for(size_t i = 0; i < Artist::number_of_triangles; i++)
   {
     /* 0111 - more mutation resiliant */
     dominant[i].visible = (i == 0) ? 7 : 0;
@@ -65,6 +81,16 @@ Artist::~Artist()
 {
   free(chromosome.dominant);
   free(chromosome.recessive);
+}
+
+/* Take a random double between [0,1] - if lower than or equal to 
+  crossover_chance, swap part of the dominant and recessive genomes. The index
+  to swap from is draw from an equal distribution from the 0th bit to the 
+  last bit.
+ */
+void Artist::crossover()
+{
+
 }
 
 /* Expresses the genotype, compares it to the submitted image and scores

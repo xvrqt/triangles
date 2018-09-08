@@ -7,12 +7,13 @@ int main(int argc, char ** argv)
 	/* Allows use of ImageMagick */
 	Magick::InitializeMagick(*argv);
 
-	/* Open the Image */
+	/* Open the source Image */
 	Magick::Image source = openImage(IMAGE_PATH);
 
-	/* Setup the random generators */
-	std::default_random_engine rand_engine(RANDOM_SEED);
-	std::independent_bits_engine<std::default_random_engine, 8, unsigned char> rand_byte_generator(rand_engine);
+	/* Initialize Artist settings with runtime parameters. */
+	Artist::initializeGenomeLength(GENOME_LENGTH);
+	Artist::initializeCrossoverChance(XOVER_CHANCE);
+	Artist::initializeRandomByteGenerator(RANDOM_SEED);
 
 	/* Generate a list of Artists */
 	std::vector<Artist> artists;
@@ -20,12 +21,12 @@ int main(int argc, char ** argv)
 	
 	for(size_t i = 0; i < POPULATION_SIZE; i++)
 	{
-		artists.emplace_back(GENOME_LENGTH);
+		artists.emplace_back();
 	}
 
 	/* Main loops - runs for # of GENERATIONS */
 	size_t number_of_generations_run = 0;  /* Keep track of which generation we're on */
-	bool run_forever = (GENERATIONS == 0); /* If # of generations is 0 - run forever. */
+	bool run_forever = (GENERATIONS == 0); /* If # of generations is 0 -> run forever */
 	for(;number_of_generations_run < GENERATIONS || run_forever; number_of_generations_run++)
 	{
 		/* Run through the list of artists, perform crossover, mutate them and

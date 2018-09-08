@@ -73,8 +73,10 @@ int main(int argc, char ** argv)
 	/* Check packing of triangle struct */
 	if(sizeof(Triangle) != 12) { std::cout << "Triangle is not packed correctly; is " << sizeof(Triangle) << " bytes, should be 12."; }
 
-	/* Setup the random bit engines */
- 	Artist::initializeRandomByteGenerator(RANDOM_SEED);
+	/* Initialize Artist settings with runtime parameters. */
+ 	Artist::initializeGenomeLength(GENOME_LENGTH);
+	Artist::initializeCrossoverChance(XOVER_CHANCE);
+	Artist::initializeRandomByteGenerator(RANDOM_SEED);
 	
 	/* Generate a random artist, calculate the fitness, and then delete it */
 	{

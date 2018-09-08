@@ -45,6 +45,12 @@ class Artist
   /* Fitnesss of the Artist */
   double fitness;
 
+  /* Max number of triangles in the chromosome */
+  static size_t number_of_triangles;
+
+  /* Length of the genome in bytes */
+  static size_t genome_length;
+
   /* Static random engine */
   static std::independent_bits_engine<std::default_random_engine, 8, unsigned char> rand_byte_generator;
 
@@ -55,7 +61,7 @@ class Artist
       /* Generates an artist with a random genotype, with only the first
         triangle set as visible.
        */
-      Artist(size_t GENOME_LENGTH);
+      Artist();
       
       /* Clean up the very obvious sources of memory leaks (chromosome) */
       ~Artist();
@@ -65,13 +71,20 @@ class Artist
        */
       double score(const Magick::Image & source);
 
-      /* Performs crossover on the chromosome */
+      /* Take a random double between [0,1] - if lower than or equal to 
+        crossover_chance, swap part of the dominant and recessive genomes. The index
+        to swap from is draw from an equal distribution from [0, (GENOME_LENGTH -1)].
+       */
+      void crossover();
 
       /* Seed the random byte generator */
       static void initializeRandomByteGenerator(size_t RANDOM_SEED);
 
       /* Set the crossover chance */
-      static void initializeCrossoverChance(double chance);
+      static void initializeCrossoverChance(double XOVER_CHANCE);
+
+      /* Set the max number of triangles, and genome byte length */
+      static void initializeGenomeLength(size_t GENOME_LENGTH);
 };
 
 #endif

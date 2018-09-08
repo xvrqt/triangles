@@ -11,7 +11,9 @@
 /* Path to the image that the artist is to draw */
 extern char * IMAGE_PATH;
 
-/* Maximum number of triangles to attempt to draw the image with. */
+/* Maximum number of triangles to attempt to draw the image with. Defaults to 
+   10 triangles.
+ */
 extern size_t GENOME_LENGTH;
 
 /* Number of artists in each generation. Must be a square number. 
