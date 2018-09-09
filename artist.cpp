@@ -350,8 +350,8 @@ void Artist::precomputeDistances(size_t POPULATION_SIZE)
     /* Caculate the total distance between p and all other points */
     Point p = points[i];
     double distance_sum = 0.0;
-    /* std::vector<std::pair<double, size_t>> */
-    auto v = location_liklihood_map[i];
+    /* std::vector<std::pair<double, size_t>> - convenience variable */
+    std::vector<std::pair<double, size_t>> & v = location_liklihood_map[i];
     for(size_t j = 0; j < points.size(); j++)
     {
       /* Don't include yourself */
@@ -366,7 +366,7 @@ void Artist::precomputeDistances(size_t POPULATION_SIZE)
       distance_sum += distance;
 
       /* Push point distance, point index pair into vector */
-      v.push_back(std::pair<double, size_t>(distance, j));
+      v.emplace_back(distance, j);
     }
 
     /* Go back through v and change the distances into relative proportions */
@@ -380,5 +380,4 @@ void Artist::precomputeDistances(size_t POPULATION_SIZE)
         return a.first > b.first; 
     });
   }
-
 }
