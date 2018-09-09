@@ -43,20 +43,9 @@ int main(int argc, char ** argv)
 			(*a).score(source);
 		}
 
-		for(auto a = artists.begin(); a != artists.end(); ++a)
-		{
-			std::cout << (*a).getFitness() << std::endl;
-		}
-
-
 		/* Sort the artists from best to worst */
 		std::sort(artists.begin(), artists.end());
-		std::cout << "---" << std::endl;
-		std::cout << (*artists.begin()).getFitness() << std::endl;
-		std::cout << (*(artists.end() -1)).getFitness() << std::endl;
-		std::cout << "---" << std::endl;
 
-		if(number_of_generations_run > 2) { exit(0); }
 
 
 		// /* Calculate the average fitness & std dev of the artists */

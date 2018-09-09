@@ -84,9 +84,40 @@ Artist::Artist()
   expected_reproduction = 1.0; /* This will be overwritten later */
 }
 
+/* Copy constuctor */
+Artist::Artist(Artist const &that)
+{
+  fitness = that.fitness;
+  expected_reproduction = that.expected_reproduction;
+
+  /* Allocate new memory for the new chromosome */
+  chromosome.dominant = (uint8_t *) malloc(Artist::genome_length);
+  chromosome.recessive = (uint8_t *) malloc(Artist::genome_length);
+
+  /* Copy the bits into the new chromosome */
+  memcpy(chromosome.dominant, that.chromosome.dominant, Artist::genome_length);
+  memcpy(chromosome.recessive, that.chromosome.recessive, Artist::genome_length);
+}
+
+/* Assignment constructor */
+void Artist::operator=(Artist const &that)
+{
+  fitness = that.fitness;
+  expected_reproduction = that.expected_reproduction;
+
+  /* Allocate new memory for the new chromosome */
+  chromosome.dominant = (uint8_t *) malloc(Artist::genome_length);
+  chromosome.recessive = (uint8_t *) malloc(Artist::genome_length);
+
+  /* Copy the bits into the new chromosome */
+  memcpy(chromosome.dominant, that.chromosome.dominant, Artist::genome_length);
+  memcpy(chromosome.recessive, that.chromosome.recessive, Artist::genome_length);
+}
+
 /* Destructor */
 Artist::~Artist()
 {
+  std::cout << "Destructor" << std::endl;
   free(chromosome.dominant);
   free(chromosome.recessive);
 }
@@ -186,10 +217,10 @@ void Artist::crossover()
        */
       size_t byte_index = bit_index / 8;
       /* There are no bytes to copy when crossover happens in the last byte */
-      if(byte_index < (genome_length - 1))
+      if(byte_index < (Artist::genome_length - 1))
       {
         /* Number of bytes to swap */
-        size_t swap_size = genome_length - byte_index - 1;
+        size_t swap_size = Artist::genome_length - byte_index - 1;
         uint8_t * byte_swap_space = (uint8_t *)malloc(sizeof(uint8_t) * swap_size);
         memcpy(byte_swap_space, (chromosome.dominant + byte_index + 1), swap_size);
         memcpy((chromosome.dominant + byte_index + 1), (chromosome.recessive + byte_index + 1), swap_size);

@@ -82,6 +82,8 @@ class Artist
 
       /* Allows us to sort without copying. Sorts via fitness. */
       bool operator <(const Artist &a) const;
+      Artist(Artist const &that);
+      void operator=(Artist const &that);
 
       /* Expresses the genotype, compares it to the submitted image and scores
        * it based on similarity.
