@@ -10,10 +10,11 @@
 #include <vector>
 #include <random>
 #include <string>
+#include <cmath>
+#include <utility>
 #include <climits>
 #include <cstdlib>
 #include <cstdint>
-#include <cmath>
 #include <limits>
 
 /* Helpful for the bit twiddling */
@@ -77,6 +78,14 @@ class Artist
 
   /* Keep count of the number of Artists. Used to set the location index. */
   static size_t count;
+
+  /* Precompute the liklihood of mating based on location and store it in this
+     table. The ith index of the first vector returns a vector of pairs. These 
+     are sorted so closest points have lower indices. Randomly select a number
+     between [0,1) and sum the liklihoods until sum > rand. The second part of 
+     the pair is the location index of Artist to mate with.
+   */
+  static std::vector<std::vector<std::pair<double, size_t>>> location_liklihood_map; 
 
   /* Generates the artist's location */
 
