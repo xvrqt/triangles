@@ -117,7 +117,6 @@ void Artist::operator=(Artist const &that)
 /* Destructor */
 Artist::~Artist()
 {
-  std::cout << "Destructor" << std::endl;
   free(chromosome.dominant);
   free(chromosome.recessive);
 }
@@ -194,6 +193,12 @@ void Artist::score(const Magick::Image & source)
 double Artist::getFitness() const
 {
   return fitness;
+}
+
+/* Returns the expected_reproduction of the Artist. # getters */
+double Artist::getExpectedReproduction() const
+{
+  return expected_reproduction;
 }
 
 /* Take a random double between [0,1] - if lower than or equal to 
@@ -275,6 +280,18 @@ void Artist::mutate()
     /* Flip the bit */
     uint8_t mask = (uint8_t)GETMASK(intra_byte_index, 1);
     genome[byte_index] ^= mask;
+  }
+}
+
+/* Sets the proportion the artists should reproduce */
+void Artist::setReproductionProportion(double avg_fitness, double std_dev)
+{
+  if(std_dev == 0) { expected_reproduction = 1; }
+  else 
+  {
+    expected_reproduction = 1 + ((fitness - avg_fitness) / (2 * std_dev));
+    /* Everyone has a smöl chance to make it */
+    if(expected_reproduction <= 0) { expected_reproduction = 0.1; }
   }
 }
 

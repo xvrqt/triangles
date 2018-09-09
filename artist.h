@@ -69,6 +69,7 @@ class Artist
   static double mutation_rate;
 
 
+
   /* Generates the artist's location */
 
     public:
@@ -93,6 +94,9 @@ class Artist
       /* Returns the fitness of the Artist #getters */
       double getFitness() const;
 
+      /* Returns the expected_reproduction of the Artist. # getters */
+      double getExpectedReproduction() const;
+
       /* Take a random double between [0,1] - if lower than or equal to 
         crossover_chance, swap part of the dominant and recessive genomes. The index
         to swap from is draw from an equal distribution from [0, (GENOME_LENGTH -1)].
@@ -101,6 +105,9 @@ class Artist
 
       /* Chance to flip some of the bits */
       void mutate();
+
+      /* Sets the proportion the artists should reproduce */
+      void setReproductionProportion(double avg_fitness, double std_dev);
 
       /* Virtual location of the artist so we can use distance as a way to 
          speciate them.

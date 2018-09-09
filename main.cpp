@@ -46,31 +46,27 @@ int main(int argc, char ** argv)
 		/* Sort the artists from best to worst */
 		std::sort(artists.begin(), artists.end());
 
+		/* Calculate the average fitness & std dev of the artists */
+		double std_dev = 0.0;
+		double avg_fitness = 0.0;
+		for(auto a = artists.begin(); a != artists.end(); ++a)
+		{
+			avg_fitness += (*a).getFitness();
+		}
+		avg_fitness /= artists.size();
 
+		/* Calculate the std dev of the artists */
+		for(auto a = artists.begin(); a != artists.end(); ++a)
+		{
+			std_dev += pow((*a).getFitness() - avg_fitness, 2);
+			std_dev = sqrt(std_dev/POPULATION_SIZE);
+		}
 
-		// /* Calculate the average fitness & std dev of the artists */
-		// double std_dev = 0.0;
-		// double avg_fitness = 0.0;
-		// for(auto a = artists.begin(); a != artists.end(); ++a)
-		// {
-		// 	avg_fitness += (*a).getFitness();
-		// }
-		// avg_fitness /= artists.size();
-
-		// /* Calculate the std dev of the artists */
-		// for(auto a = artists.begin(); a != artists.end(); ++a)
-		// {
-		// 	std_dev += pow((*a).getFitness() - avg_fitness, 2);
-		// 	std_dev = sqrt(std_dev/POPULATION_SIZE);
-		// }
-
-		// std::cout << "std dev: " << std_dev << std::endl;
-
-		// /* Calculate the number of times an artist should reproduce */
-		// for(auto a = artists.begin(); a != artists.end(); ++a)
-		// {
-		// 	// (*a).setReproductionProportion(avg_fitness);
-		// }
+		/* Calculate the number of times an artist should reproduce */
+		for(auto a = artists.begin(); a != artists.end(); ++a)
+		{
+			(*a).setReproductionProportion(avg_fitness, std_dev);
+		}
 
 		/* Mate the artists to produce the next generation in proportion to
 		   their fitness.
