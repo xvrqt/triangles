@@ -7,16 +7,11 @@ int main(int argc, char ** argv)
 	/* Allows use of ImageMagick */
 	Magick::InitializeMagick(*argv);
 
+	/* Initialize Artist settings with runtime parameters. */
+	Artist::initialization(GENOME_LENGTH, MUTATION_RATE, XOVER_CHANCE, RANDOM_SEED, POPULATION_SIZE);
+
 	/* Open the source Image */
 	Magick::Image source = openImage(IMAGE_PATH);
-
-	/* Initialize Artist settings with runtime parameters. */
-	Artist::initializeGenomeLength(GENOME_LENGTH);
-	Artist::initializeMutationRate(MUTATION_RATE);
-	Artist::initializeCrossoverChance(XOVER_CHANCE);
-	Artist::initializeRandomByteGenerator(RANDOM_SEED);
-	/* This needs to be done last - should have a function that guarantees order */
-	Artist::precomputeDistances(POPULATION_SIZE);
 
 	/* Initialize the srand for crossover/mutation decisions */
 	srand(RANDOM_SEED);

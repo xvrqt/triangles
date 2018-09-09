@@ -129,6 +129,11 @@ class Artist
       /* Sets the proportion the artists should reproduce */
       void setReproductionProportion(double avg_fitness, double std_dev); 
 
+      /* Convenience funtion that calls the other initialization functions and ensures
+         they are called in the correct order.
+       */
+      static void initialization(size_t GENOME_LENGTH, double MUTATION_RATE, double XOVER_CHANCE, size_t RANDOM_SEED, size_t POPULATION_SIZE);
+
       /* Seed the random byte generator */
       static void initializeRandomByteGenerator(size_t RANDOM_SEED);
 

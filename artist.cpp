@@ -12,6 +12,16 @@ size_t Artist::number_of_triangles = 10;
 size_t Artist::genome_length = (Artist::number_of_triangles * sizeof(Triangle) + 4 * sizeof(uint8_t));
 size_t Artist::count = 0;
 
+/* Calls all the other initialization functions */
+void Artist::initialization(size_t GENOME_LENGTH, double MUTATION_RATE, double XOVER_CHANCE, size_t RANDOM_SEED, size_t POPULATION_SIZE)
+{
+  Artist::initializeRandomByteGenerator(RANDOM_SEED);
+  Artist::initializeMutationRate(MUTATION_RATE);
+  Artist::initializeCrossoverChance(XOVER_CHANCE);
+  Artist::initializeGenomeLength(GENOME_LENGTH);
+  Artist::precomputeDistances(POPULATION_SIZE);
+}
+
 /* Set up the static random byte generator */
 void Artist::initializeRandomByteGenerator(size_t RANDOM_SEED)
 {
