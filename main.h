@@ -9,3 +9,4 @@
 #include "image.h"
 #include "artist.h"
 #include "triangle.h"
+#include "location.h"

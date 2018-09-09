@@ -32,13 +32,6 @@ struct Chromosome {
   size_t crossover_point = 0;
 };
 
-/* Used to precompute the distance between Artist locations */
-struct Point {
-  double x;
-  double y;
-  double z;
-};
-
 /* An artist represents a genome, with some additional state information and
    functionality. 
 
@@ -135,7 +128,7 @@ class Artist
       /* Convenience funtion that calls the other initialization functions and ensures
          they are called in the correct order.
        */
-      static void initialization(size_t GENOME_LENGTH, double MUTATION_RATE, double XOVER_CHANCE, size_t RANDOM_SEED, size_t POPULATION_SIZE);
+      static void initialization(size_t GENOME_LENGTH, double MUTATION_RATE, double XOVER_CHANCE, size_t RANDOM_SEED);
 
       /* Seed the random byte generator */
       static void initializeRandomByteGenerator(size_t RANDOM_SEED);
@@ -148,16 +141,6 @@ class Artist
 
       /* Set the max number of triangles, and genome byte length */
       static void initializeGenomeLength(size_t GENOME_LENGTH);
-
-      /* Generates N approximately equidistant points on sphere, and pre
-         computes the distance between them, storing the results in a vector.
-         Artists ar point P choose the Pth index in the vector, which is 
-         another vector of pairs containing the precomputed distances between 
-         every other point, and the index of the point.
-
-         This must be done before constructing artists.
-       */
-      static void precomputeDistances(size_t POPULATION_SIZE);
 };
 
 #endif
