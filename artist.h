@@ -60,6 +60,9 @@ class Artist
   /* The expected amount of times an Artist will reproduce */
   double expected_reproduction;
 
+  /* Index into where the artist lives in the Artist Location Map */
+  size_t location_index;
+
   /* Max number of triangles in the chromosome */
   static size_t number_of_triangles;
 
@@ -114,8 +117,8 @@ class Artist
       /* Returns the expected_reproduction of the Artist. # getters */
       double getExpectedReproduction() const;
 
-      /* Index into where the artist lives in the Artist Location Map */
-      size_t location_index;
+      /* Returns the location index of the Artist */
+      size_t getLocationIndex() const;
 
       /* Take a random double between [0,1] - if lower than or equal to 
         crossover_chance, swap part of the dominant and recessive genomes. The index

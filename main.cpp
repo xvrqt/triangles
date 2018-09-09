@@ -30,6 +30,17 @@ int main(int argc, char ** argv)
 	bool run_forever = (GENERATIONS == 0); /* If # of generations is 0 -> run forever */
 	for(;number_of_generations_run < GENERATIONS || run_forever; number_of_generations_run++)
 	{
+		/* Add the artists to a location indexed vector so that it's easy to 
+		   look them up later for mating.
+		*/
+		std::vector<Artist> location_map;
+		location_map.resize(POPULATION_SIZE);
+		for(auto a = artists.begin(); a != artists.end(); ++a)
+		{
+			size_t i = (*a).getLocationIndex();
+			location_map[i] = (*a);
+		}
+
 		/* Run through the list of artists, perform crossover, mutate them and
 		   and score them. [ thread this later ]
 		 */

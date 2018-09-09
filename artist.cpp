@@ -214,10 +214,16 @@ double Artist::getFitness() const
   return fitness;
 }
 
-/* Returns the expected_reproduction of the Artist. # getters */
+/* Returns the expected_reproduction of the Artist. #getters */
 double Artist::getExpectedReproduction() const
 {
   return expected_reproduction;
+}
+
+/* Returns the location index of the Artist. #getters */
+size_t Artist::getLocationIndex() const
+{
+  return location_index;
 }
 
 /* Take a random double between [0,1] - if lower than or equal to 
