@@ -7,6 +7,7 @@ double Artist::crossover_chance = 0.7;
 double Artist::mutation_rate = 0.005;
 size_t Artist::number_of_triangles = 10;
 size_t Artist::genome_length = (Artist::number_of_triangles * sizeof(Triangle) + 4 * sizeof(uint8_t));
+size_t Artist::count = 0;
 
 /* Set up the static random byte generator */
 void Artist::initializeRandomByteGenerator(size_t RANDOM_SEED)
@@ -82,12 +83,16 @@ Artist::Artist()
   /* Set the fitness as high as possible to ensure it's replaced. */
   fitness = std::numeric_limits<double>::max();
   expected_reproduction = 1.0; /* This will be overwritten later */
+
+  /* Sets the location index */
+  location_index = Artist::count++;
 }
 
 /* Copy constuctor */
 Artist::Artist(Artist const &that)
 {
   fitness = that.fitness;
+  location_index = that.location_index;
   expected_reproduction = that.expected_reproduction;
 
   /* Allocate new memory for the new chromosome */
@@ -103,6 +108,7 @@ Artist::Artist(Artist const &that)
 void Artist::operator=(Artist const &that)
 {
   fitness = that.fitness;
+  location_index = that.location_index;
   expected_reproduction = that.expected_reproduction;
 
   /* Allocate new memory for the new chromosome */
@@ -299,4 +305,32 @@ void Artist::setReproductionProportion(double avg_fitness, double std_dev)
 bool Artist::operator <(const Artist &a) const
 {
   return fitness < a.fitness;
+}
+
+/* Generates N approximately equidistant points on sphere, and pre
+   computes the distance between them, storing the results in a vector.
+   Artists ar point P choose the Pth index in the vector, which is 
+   another vector of pairs containing the precomputed distances between 
+   every other point, and the index of the point.
+
+   This must be done before constructing artists.
+ */
+void Artist::precomputeDistances(size_t POPULATION_SIZE)
+{
+  std::vector<Point> points;
+  double offset = 2.0/(double)POPULATION_SIZE;
+  double increment = M_PI * (3.0 - std::sqrt(5.0));
+
+  for(size_t i = 0; i < POPULATION_SIZE; i++)
+  {
+    Point p;
+    p.y = (((double)i * offset) -1.0) + (offset / 2.0);
+    double r = std::sqrt(1.0 - std::pow(p.y, 2.0));
+    double phi = ((i + 1) % POPULATION_SIZE) * increment;
+    p.x = std::cos(phi) * r;
+    p.z = std::sin(phi) * r;
+
+    points.emplace_back(p);
+  }
+
 }

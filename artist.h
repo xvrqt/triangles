@@ -31,6 +31,13 @@ struct Chromosome {
   size_t crossover_point = 0;
 };
 
+/* Used to precompute the distance between Artist locations */
+struct Point {
+  double x;
+  double y;
+  double z;
+};
+
 /* An artist represents a genome, with some additional state information and
    functionality. 
 
@@ -68,7 +75,8 @@ class Artist
   /* Chance, per bit, to be flipped per generation */
   static double mutation_rate;
 
-
+  /* Keep count of the number of Artists. Used to set the location index. */
+  static size_t count;
 
   /* Generates the artist's location */
 
@@ -97,6 +105,9 @@ class Artist
       /* Returns the expected_reproduction of the Artist. # getters */
       double getExpectedReproduction() const;
 
+      /* Index into where the artist lives in the Artist Location Map */
+      size_t location_index;
+
       /* Take a random double between [0,1] - if lower than or equal to 
         crossover_chance, swap part of the dominant and recessive genomes. The index
         to swap from is draw from an equal distribution from [0, (GENOME_LENGTH -1)].
@@ -107,12 +118,7 @@ class Artist
       void mutate();
 
       /* Sets the proportion the artists should reproduce */
-      void setReproductionProportion(double avg_fitness, double std_dev);
-
-      /* Virtual location of the artist so we can use distance as a way to 
-         speciate them.
-       */
-      int x, y, z;
+      void setReproductionProportion(double avg_fitness, double std_dev); 
 
       /* Seed the random byte generator */
       static void initializeRandomByteGenerator(size_t RANDOM_SEED);
@@ -125,6 +131,16 @@ class Artist
 
       /* Set the max number of triangles, and genome byte length */
       static void initializeGenomeLength(size_t GENOME_LENGTH);
+
+      /* Generates N approximately equidistant points on sphere, and pre
+         computes the distance between them, storing the results in a vector.
+         Artists ar point P choose the Pth index in the vector, which is 
+         another vector of pairs containing the precomputed distances between 
+         every other point, and the index of the point.
+
+         This must be done before constructing artists.
+       */
+      static void precomputeDistances(size_t POPULATION_SIZE);
 };
 
 #endif

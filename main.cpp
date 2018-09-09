@@ -15,6 +15,8 @@ int main(int argc, char ** argv)
 	Artist::initializeMutationRate(MUTATION_RATE);
 	Artist::initializeCrossoverChance(XOVER_CHANCE);
 	Artist::initializeRandomByteGenerator(RANDOM_SEED);
+	/* This needs to be done last - should have a function that guarantees order */
+	Artist::precomputeDistances(POPULATION_SIZE);
 
 	/* Initialize the srand for crossover/mutation decisions */
 	srand(RANDOM_SEED);
