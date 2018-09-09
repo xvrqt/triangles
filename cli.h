@@ -17,9 +17,7 @@ extern char * IMAGE_PATH;
  */
 extern size_t GENOME_LENGTH;
 
-/* Number of artists in each generation. Must be a square number. 
-   Defaults to 25.
- */
+/* Number of artists in each generation. Defaults to 25 */
 extern size_t POPULATION_SIZE;
 
 /* Number of generations to run. Defaults to 0 (infinite) */

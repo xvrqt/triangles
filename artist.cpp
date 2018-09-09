@@ -81,6 +81,7 @@ Artist::Artist()
 
   /* Set the fitness as high as possible to ensure it's replaced. */
   fitness = std::numeric_limits<double>::max();
+  expected_reproduction = 1.0; /* This will be overwritten later */
 }
 
 /* Destructor */
@@ -93,7 +94,7 @@ Artist::~Artist()
 /* Expresses the genotype, compares it to the submitted image and scores
  * it based on similarity. Sets and returns the fitness.
  */
-double Artist::score(const Magick::Image & source)
+void Artist::score(const Magick::Image & source)
 {
   /* Extract the source dimensions */
   std::string source_width(std::to_string(source.columns()));
@@ -156,6 +157,11 @@ double Artist::score(const Magick::Image & source)
     newly drawn image.
    */
   fitness = canvas.compare(source, Magick::RootMeanSquaredErrorMetric);
+}
+
+/* Returns the fitness of the Artist #getters */
+double Artist::getFitness() const
+{
   return fitness;
 }
 
@@ -180,7 +186,7 @@ void Artist::crossover()
        */
       size_t byte_index = bit_index / 8;
       /* There are no bytes to copy when crossover happens in the last byte */
-      if(byte_index >= (genome_length - 1))
+      if(byte_index < (genome_length - 1))
       {
         /* Number of bytes to swap */
         size_t swap_size = genome_length - byte_index - 1;
@@ -188,6 +194,9 @@ void Artist::crossover()
         memcpy(byte_swap_space, (chromosome.dominant + byte_index + 1), swap_size);
         memcpy((chromosome.dominant + byte_index + 1), (chromosome.recessive + byte_index + 1), swap_size);
         memcpy((chromosome.recessive + byte_index + 1), byte_swap_space, swap_size);
+
+        /* Don't forget to clean up */
+        free(byte_swap_space);
       }
 
       /* For the byte that is split, swap the bits */

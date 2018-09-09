@@ -18,9 +18,6 @@
 
 /* Helpful for the bit twiddling */
 #define GETMASK(index, size) (((1 << (size)) - 1) << (index))
-#define READFROM(data, index, size) (((data) & GETMASK((index), (size))) >> (index))
-#define WRITETO(data, index, size, value) ((data) = ((data) & (~(uint8_t)GETMASK((index), (size)))) | ((value) << (index)))
-
 
 /* Semantic struct to represent the diploid nature of the genes */
 struct Chromosome {
@@ -52,6 +49,9 @@ class Artist
   /* Fitnesss of the Artist */
   double fitness;
 
+  /* The expected amount of times an Artist will reproduce */
+  double expected_reproduction;
+
   /* Max number of triangles in the chromosome */
   static size_t number_of_triangles;
 
@@ -68,6 +68,9 @@ class Artist
   /* Chance, per bit, to be flipped per generation */
   static double mutation_rate;
 
+
+  /* Generates the artist's location */
+
     public:
       /* Generates an artist with a random genotype, with only the first
         triangle set as visible.
@@ -77,13 +80,16 @@ class Artist
       /* Clean up the very obvious sources of memory leaks (chromosome) */
       ~Artist();
 
-      /* Allows us to sort without copying */
+      /* Allows us to sort without copying. Sorts via fitness. */
       bool operator <(const Artist &a) const;
 
       /* Expresses the genotype, compares it to the submitted image and scores
        * it based on similarity.
        */
-      double score(const Magick::Image & source);
+      void score(const Magick::Image & source);
+
+      /* Returns the fitness of the Artist #getters */
+      double getFitness() const;
 
       /* Take a random double between [0,1] - if lower than or equal to 
         crossover_chance, swap part of the dominant and recessive genomes. The index
@@ -93,6 +99,11 @@ class Artist
 
       /* Chance to flip some of the bits */
       void mutate();
+
+      /* Virtual location of the artist so we can use distance as a way to 
+         speciate them.
+       */
+      int x, y, z;
 
       /* Seed the random byte generator */
       static void initializeRandomByteGenerator(size_t RANDOM_SEED);
