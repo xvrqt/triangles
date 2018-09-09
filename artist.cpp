@@ -289,7 +289,7 @@ void Artist::setReproductionProportion(double avg_fitness, double std_dev)
   if(std_dev == 0) { expected_reproduction = 1; }
   else 
   {
-    expected_reproduction = 1 + ((fitness - avg_fitness) / (2 * std_dev));
+    expected_reproduction = 1 - ((fitness - avg_fitness) / (2 * std_dev));
     /* Everyone has a smöl chance to make it */
     if(expected_reproduction <= 0) { expected_reproduction = 0.1; }
   }

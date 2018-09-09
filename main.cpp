@@ -68,9 +68,32 @@ int main(int argc, char ** argv)
 			(*a).setReproductionProportion(avg_fitness, std_dev);
 		}
 
+		/* Add artists to a new vector, in proportion to their fitness, with
+		   a small amount of randomness for good measure.
+		 */
+		std::vector<Artist> artists_proportional;
+		artists_proportional.reserve(POPULATION_SIZE);
+
+		double roulette = (double) ((double)rand()/(double)RAND_MAX);
+		double sum = 0.0;
+		size_t index = 0;
+		for(;artists_proportional.size() < artists.size();)
+		{
+			double expected_reproduction = artists[index].getExpectedReproduction();
+			for(sum += expected_reproduction; sum > roulette; roulette++)
+			{
+				artists_proportional.push_back(artists[index]);
+			}
+			index++;
+		}
+		artists_proportional.resize(POPULATION_SIZE);
+
 		/* Mate the artists to produce the next generation in proportion to
 		   their fitness.
 		 */
+		for(auto a = artists_proportional.begin(); a != artists_proportional.end(); ++a)
+		{
+		}
 
 
 
