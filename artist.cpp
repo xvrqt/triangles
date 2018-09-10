@@ -100,6 +100,29 @@ Artist::Artist()
   location_index = Artist::count++;
 }
 
+/* Generates a new Artist from two parent artists. Caller is responsible
+   for freeing the returned baby.
+ */
+Artist::Artist(const Artist &a, const Artist &b)
+{
+  /* Allocate the memory for the chromosome */
+  chromosome.dominant = (uint8_t *) malloc(Artist::genome_length);
+  chromosome.recessive = (uint8_t *) malloc(Artist::genome_length);
+
+  /* Copy the bits into the new chromosome. A gives the dominant genome, B 
+     gives the recessive genome.
+   */
+  memcpy(chromosome.dominant, a.chromosome.dominant, Artist::genome_length);
+  memcpy(chromosome.recessive, b.chromosome.recessive, Artist::genome_length);
+
+  /* Set the fitness as high as possible to ensure it's replaced. */
+  fitness = std::numeric_limits<double>::max();
+  expected_reproduction = 1.0; /* This will be overwritten later */
+
+  /* Copy A's location index. Don't increment. */
+  location_index = a.location_index;
+}
+
 /* Copy constuctor */
 Artist::Artist(Artist const &that)
 {
@@ -227,7 +250,7 @@ size_t Artist::getLocationIndex() const
 /* Set the location index - in case it already exists */
 void Artist::setLocationIndex(size_t index)
 {
-  if(index >= POPULATION_SIZE || index < 0)
+  if(index >= POPULATION_SIZE)
   {
     std::cerr << "Tried setting an out of bounds location index!\nIndex given: "
     << index << "\nAllowed indices: [0," << (POPULATION_SIZE - 1) << "]" << std::endl;
@@ -316,16 +339,6 @@ void Artist::mutate()
     uint8_t mask = (uint8_t)GETMASK(intra_byte_index, 1);
     genome[byte_index] ^= mask;
   }
-}
-
-/* This artist contributes its dominant genome, the passed artist 
-   provides its recessive genome and they combine into a new diploid
-   artist. The location is the same as the calling parent. Creates a new
-   Artist that the called is responsible for deleting.
- */
-Artist * mate(const Artist & mate)
-{
-  
 }
 
 /* Sets the proportion the artists should reproduce */

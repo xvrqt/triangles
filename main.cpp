@@ -63,11 +63,8 @@ int main(int argc, char ** argv)
 						break;
 					}
 				}
-				std::cout << "didn't find" << std::endl;
-				exit(0);	
 			}
 		}
-
 		/* Run through the list of artists, perform crossover, mutate them and
 		   and score them. [ thread this later ]
 		 */
@@ -128,6 +125,8 @@ int main(int argc, char ** argv)
 		/* Mate the artists to produce the next generation in proportion to
 		   their fitness.
 		 */
+		std::vector<Artist *> next_generation;
+		next_generation.reserve(POPULATION_SIZE);
 		for(auto a = artists_proportional.begin(); a != artists_proportional.end(); ++a)
 		{
 			Artist * mate = NULL;
@@ -145,13 +144,16 @@ int main(int argc, char ** argv)
 				if(sum >= zero_to_one) { mate = location_map[(*it).second]; }
 			}
 
-			/*
-			(*a)->mate();*/
+			/* Push the baby of the artists into the next generation. */
+			next_generation.push_back(new Artist(**a, *mate));
 		}
 
-
-
+		/* Delete old artists and copy the next_generation into the artists vector. */
+		for(auto a = artists.begin(); a != artists.end(); ++a)
+		{
+			delete (*a);
+		}
+		artists.clear();
+		artists = next_generation;
 	}
-
-
 }

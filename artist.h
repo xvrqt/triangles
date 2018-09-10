@@ -90,6 +90,11 @@ class Artist
         triangle set as visible.
        */
       Artist();
+
+      /* Generates a new Artist from two parent artists. Caller is responsible
+         for freeing the returned baby.
+       */
+      Artist(const Artist &a, const Artist &b);
       
       /* Clean up the very obvious sources of memory leaks (chromosome) */
       ~Artist();
@@ -124,13 +129,6 @@ class Artist
 
       /* Chance to flip some of the bits */
       void mutate();
-
-      /* This artist contributes its dominant genome, the passed artist 
-         provides its recessive genome and they combine into a new diploid
-         artist. The location is the same as the calling parent. Creates a new
-         Artist that the called is responsible for deleting.
-       */
-      Artist * mate(const Artist & mate);
 
       /* Sets the proportion the artists should reproduce */
       void setReproductionProportion(double avg_fitness, double std_dev); 
