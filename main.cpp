@@ -40,22 +40,32 @@ int main(int argc, char ** argv)
 		std::fill(location_map.begin(), location_map.end(), (Artist *)NULL);
 		for(auto a = artists.begin(); a != artists.end(); ++a)
 		{
-			bool unsuccessful = true;
 			size_t location_index = (*a)->getLocationIndex();
-			while(unsuccessful)
+			/* If the location is available - add the Artist there */
+			if(location_map[location_index] == NULL)
 			{
-				/* If the location is available - add the Artist there */
-				if(location_map[location_index] == NULL)
-				{
-					unsuccessful = false;
-					location_map[location_index] = (*a);
-				}
-				else /* Find a new location based on the precomputed map */
-				{
-
-				}
+				location_map[location_index] = (*a);
 			}
-			// location_map[i] = (*a);
+			else /* Find a new location based on the precomputed map. */
+			{
+				/* Go down the list, from closest to furthest and try to
+				   find an empty location.
+				 */
+				auto v = location_likelihood_map[location_index];
+				for(auto it = v.begin(); it != v.end(); ++it)
+				{
+					/* std::pair<double, size_t> (relative closeness, location index) */
+					location_index = (*it).second;
+					if(location_map[location_index] == NULL)
+					{
+						location_map[location_index] = (*a);
+						(*a)->setLocationIndex(location_index);
+						break;
+					}
+				}
+				std::cout << "didn't find" << std::endl;
+				exit(0);	
+			}
 		}
 
 		/* Run through the list of artists, perform crossover, mutate them and
@@ -120,6 +130,23 @@ int main(int argc, char ** argv)
 		 */
 		for(auto a = artists_proportional.begin(); a != artists_proportional.end(); ++a)
 		{
+			Artist * mate = NULL;
+			/* Random mate selection based on distance */
+			double sum = 0.0;
+			double zero_to_one = ((double)rand()/RAND_MAX);
+			auto v = location_likelihood_map[(*a)->getLocationIndex()];
+			for(auto it = v.begin(); it != v.end(); ++it)
+			{
+				/* Add the percent distance to the sum */
+				sum += (*it).first;
+				/* If the sum is greater or equal to zero_to_one; mate with
+				   that artist.
+				 */
+				if(sum >= zero_to_one) { mate = location_map[(*it).second]; }
+			}
+
+			/*
+			(*a)->mate();*/
 		}
 
 

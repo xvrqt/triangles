@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <cmath>
+#include <iostream>
 
 /* Used to precompute the distance between Artist locations */
 struct Point {

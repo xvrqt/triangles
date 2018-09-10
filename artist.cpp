@@ -199,7 +199,6 @@ void Artist::score(const Magick::Image & source)
 
   /* Draw the triangles! */
   canvas.draw(triangle_list);
-  // canvas.write("testing_resources/test_canvas.png");
 
   /* The current fitness function is only the RMSE between the source and the 
     newly drawn image.
@@ -223,6 +222,18 @@ double Artist::getExpectedReproduction() const
 size_t Artist::getLocationIndex() const
 {
   return location_index;
+}
+
+/* Set the location index - in case it already exists */
+void Artist::setLocationIndex(size_t index)
+{
+  if(index >= POPULATION_SIZE || index < 0)
+  {
+    std::cerr << "Tried setting an out of bounds location index!\nIndex given: "
+    << index << "\nAllowed indices: [0," << (POPULATION_SIZE - 1) << "]" << std::endl;
+    exit(1);
+  }
+  else { location_index = index; }
 }
 
 /* Take a random double between [0,1] - if lower than or equal to 
@@ -305,6 +316,16 @@ void Artist::mutate()
     uint8_t mask = (uint8_t)GETMASK(intra_byte_index, 1);
     genome[byte_index] ^= mask;
   }
+}
+
+/* This artist contributes its dominant genome, the passed artist 
+   provides its recessive genome and they combine into a new diploid
+   artist. The location is the same as the calling parent. Creates a new
+   Artist that the called is responsible for deleting.
+ */
+Artist * mate(const Artist & mate)
+{
+  
 }
 
 /* Sets the proportion the artists should reproduce */

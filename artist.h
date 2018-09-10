@@ -113,6 +113,9 @@ class Artist
       /* Returns the location index of the Artist */
       size_t getLocationIndex() const;
 
+      /* Set the location index - in case it already exists */
+      void setLocationIndex(size_t index);
+
       /* Take a random double between [0,1] - if lower than or equal to 
         crossover_chance, swap part of the dominant and recessive genomes. The index
         to swap from is draw from an equal distribution from [0, (GENOME_LENGTH -1)].
@@ -121,6 +124,13 @@ class Artist
 
       /* Chance to flip some of the bits */
       void mutate();
+
+      /* This artist contributes its dominant genome, the passed artist 
+         provides its recessive genome and they combine into a new diploid
+         artist. The location is the same as the calling parent. Creates a new
+         Artist that the called is responsible for deleting.
+       */
+      Artist * mate(const Artist & mate);
 
       /* Sets the proportion the artists should reproduce */
       void setReproductionProportion(double avg_fitness, double std_dev); 
