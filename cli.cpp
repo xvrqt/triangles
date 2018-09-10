@@ -15,7 +15,7 @@ size_t GENERATIONS = 0;
 /* The top N Artists from each population will rollover into the next 
    generation.
  */
-size_t ELITISM = 0;
+size_t ELITISM = POPULATION_SIZE / 10;
 
 /* srand() seed for repeatable testing */
 unsigned int RANDOM_SEED = time(NULL);

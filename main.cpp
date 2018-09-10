@@ -65,15 +65,20 @@ int main(int argc, char ** argv)
 				}
 			}
 		}
+
 		/* Run through the list of artists, perform crossover, mutate them and
-		   and score them. [ thread this later ]
+		   and score them.
 		 */
+		std::vector<std::thread> threads;
 		for(auto a = artists.begin(); a != artists.end(); ++a)
 		{
-			(*a)->crossover();
-			(*a)->mutate();
-			(*a)->score(source);
+			threads.push_back(std::thread([](Artist * a, Magick::Image source_image) {
+				a->crossover();
+				a->mutate();
+				a->score(source_image);
+			}, (*a), source));
 		}
+		for (auto& th : threads) { th.join(); }
 
 		/* Sort the artists from best to worst */
 		std::sort(artists.begin(), artists.end(), [](const Artist * a, const Artist * b) -> bool { 

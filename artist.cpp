@@ -200,13 +200,25 @@ void Artist::score(const Magick::Image & source)
     
     /* If both triangles were visibilty 0; draw neither */
     if(tri.visible == 0) { continue; }
-    
+
+    /* Create masks so that it only draws (roughly) within the image's 
+       boundaries.
+     */
+    size_t width = source.columns();
+    size_t height = source.rows();
+
+    size_t num_w_bits = std::log2(width);
+    size_t num_h_bits = std::log2(height);
+
+    unsigned short mask_w = (unsigned short)GETMASK(0, num_w_bits);
+    unsigned short mask_h = (unsigned short)GETMASK(0, num_h_bits);
+
     /* Transform the triangle into a DrawablePolygons */      
     /* Translate the coordinates */
     Magick::CoordinateList coordinates;
-    coordinates.push_back(Magick::Coordinate(tri.x1,tri.y1));
-    coordinates.push_back(Magick::Coordinate(tri.x2,tri.y2));
-    coordinates.push_back(Magick::Coordinate(tri.x3,tri.y3));
+    coordinates.push_back(Magick::Coordinate(tri.x1 & mask_w,tri.y1 & mask_h));
+    coordinates.push_back(Magick::Coordinate(tri.x2 & mask_w,tri.y2 & mask_h));
+    coordinates.push_back(Magick::Coordinate(tri.x3 & mask_w,tri.y3 & mask_h));
     Magick::DrawablePolyline drawable_triangle(coordinates);
 
     /* Set the fill/stroke color */

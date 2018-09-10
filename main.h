@@ -3,6 +3,7 @@
 
 #include <algorithm>
 
+#include <thread>
 #include <stdlib.h>
 
 #include "cli.h"
