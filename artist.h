@@ -130,6 +130,9 @@ class Artist
       /* Chance to flip some of the bits */
       void mutate();
 
+      /* Draw and output the image */
+      Magick::Image draw(size_t width, size_t height);
+
       /* Sets the proportion the artists should reproduce */
       void setReproductionProportion(double avg_fitness, double std_dev); 
 

@@ -127,8 +127,15 @@ int main(int argc, char ** argv)
 		 */
 		std::vector<Artist *> next_generation;
 		next_generation.reserve(POPULATION_SIZE);
+		size_t counter = 0; /* Stop if count > POPULATION_SIZE (only relevant when elitism is set) */
 		for(auto a = artists_proportional.begin(); a != artists_proportional.end(); ++a)
 		{
+			if(counter >= POPULATION_SIZE) { break; }
+			if(counter < ELITISM)
+			{
+				next_generation.push_back(new Artist(**a));
+			}
+
 			Artist * mate = NULL;
 			/* Random mate selection based on distance */
 			double sum = 0.0;
@@ -146,6 +153,15 @@ int main(int argc, char ** argv)
 
 			/* Push the baby of the artists into the next generation. */
 			next_generation.push_back(new Artist(**a, *mate));
+		}
+
+		/* Print out the best fitness and save the best image */
+		if((number_of_generations_run % 25) == 0)
+		{
+			std::cout << artists[0]->getFitness() << std::endl;
+			Magick::Image best_image = artists[0]->draw(source.columns(), source.rows());
+			std::string num_gens = std::to_string(number_of_generations_run);
+			best_image.write("output/" + num_gens + ".png");
 		}
 
 		/* Delete old artists and copy the next_generation into the artists vector. */

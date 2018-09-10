@@ -12,6 +12,11 @@ size_t POPULATION_SIZE = 25;
 /* Number of generations to run */
 size_t GENERATIONS = 0;
 
+/* The top N Artists from each population will rollover into the next 
+   generation.
+ */
+size_t ELITISM = 0;
+
 /* srand() seed for repeatable testing */
 unsigned int RANDOM_SEED = time(NULL);
 
@@ -32,6 +37,7 @@ void parseArgs(int argc, char ** argv)
             {"genome-length",       required_argument, 0, 'g'},
             {"population-size",     required_argument, 0, 'p'},
             {"generations",         required_argument, 0, 'n'},
+            {"elitism",             required_argument, 0, 'e'},
             {"random-seed",         required_argument, 0, 'r'},
             {"crossover-chance",    required_argument, 0, 'x'},
             {"mutation-rate",       required_argument, 0, 'm'},
@@ -42,7 +48,7 @@ void parseArgs(int argc, char ** argv)
         int option_index = 0;
 
         /* Short codes for characters */
-        const char * short_options = "i:g:p:n:r:x:m:";
+        const char * short_options = "i:g:e:p:n:r:x:m:";
 
         c = getopt_long(argc, argv, short_options, long_options, &option_index);
 
@@ -74,6 +80,19 @@ void parseArgs(int argc, char ** argv)
                 else
                 {
                     GENOME_LENGTH = g;
+                }                
+                break;
+            }
+            case 'e': {
+                int e = atoi(optarg);
+                if(e < 0)
+                {
+                    printf("The genome length  must be greater than 0.\n");
+                    exit(1);
+                }
+                else
+                {
+                    ELITISM = e;
                 }                
                 break;
             }

@@ -229,6 +229,67 @@ void Artist::score(const Magick::Image & source)
   fitness = canvas.compare(source, Magick::RootMeanSquaredErrorMetric);
 }
 
+/* Draw and return the image */
+Magick::Image Artist::draw(size_t width, size_t height)
+{
+  /* Extract the source dimensions */
+  std::string source_width(std::to_string(width));
+  std::string source_height(std::to_string(height));
+  std::string image_dimensions = source_width + "x" + source_height;
+
+  /* Extract the RGBA background color from the dominant genome */
+  uint8_t * rgba = chromosome.dominant + BG_COLOR_OFFSET;
+
+  /* Create a new canvas, same size as the source with the encoded background 
+     color.
+   */
+  Magick::Color bg_color(rgba[0], rgba[1], rgba[2], rgba[3]);
+  Magick::Image canvas(image_dimensions, bg_color);
+
+  /* Set some drawing defaults on the image */
+  canvas.strokeWidth(0.0);
+  canvas.strokeAntiAlias(true);
+
+  /* Create a list of triangles to draw to the canvas */
+  Triangle * dominant = (Triangle *)(chromosome.dominant + TRIANGLE_LIST_BEGIN);
+  Triangle * recessive = (Triangle *)(chromosome.recessive + TRIANGLE_LIST_BEGIN);
+  std::vector<Magick::Drawable> triangle_list;
+
+  for(size_t i = 0; i < GENOME_LENGTH; i++)
+  {
+    Triangle tri_dom = dominant[i];
+    Triangle tri_rec = recessive[i];
+    
+    /* Draw the triangle with the higher visible parameter */
+    Triangle tri = (tri_dom.visible >= tri_rec.visible) ? tri_dom : tri_rec;
+    
+    /* If both triangles were visibilty 0; draw neither */
+    if(tri.visible == 0) { continue; }
+    
+    /* Transform the triangle into a DrawablePolygons */      
+    /* Translate the coordinates */
+    Magick::CoordinateList coordinates;
+    coordinates.push_back(Magick::Coordinate(tri.x1,tri.y1));
+    coordinates.push_back(Magick::Coordinate(tri.x2,tri.y2));
+    coordinates.push_back(Magick::Coordinate(tri.x3,tri.y3));
+    Magick::DrawablePolyline drawable_triangle(coordinates);
+
+    /* Set the fill/stroke color */
+    Magick::Color color(tri.r, tri.g, tri.b, tri.a);
+    canvas.strokeColor(color);
+    canvas.fillColor(color);
+
+    /* Push the colors and then the shape onto the drawable lsit */
+    triangle_list.push_back(Magick::DrawableFillColor(color));
+    triangle_list.push_back(Magick::DrawableStrokeColor(color));
+    triangle_list.push_back(drawable_triangle);
+  }
+
+  /* Draw the triangles! */
+  canvas.draw(triangle_list);
+  return canvas;
+}
+
 /* Returns the fitness of the Artist #getters */
 double Artist::getFitness() const
 {

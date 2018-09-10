@@ -23,6 +23,11 @@ extern size_t POPULATION_SIZE;
 /* Number of generations to run. Defaults to 0 (infinite) */
 extern size_t GENERATIONS;
 
+/* The top N Artists from each population will rollover into the next 
+   generation. Defaults to 5.
+ */
+extern size_t ELITISM;
+
 /* srand() seed for repeatable testing. Defaults to 0. */
 extern unsigned int RANDOM_SEED;
 
