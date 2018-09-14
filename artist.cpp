@@ -1,6 +1,60 @@
 #include "artist.h"
 
 /* * * * * * * * * * * * * * * * * * *
+ *          Helper Functions         *
+ * * * * * * * * * * * * * * * * * * */
+
+/* Takes an Image and for each pixel (except the ones in the left most column)
+   and sets it as true if it is lighter than the pixel to the left, and false
+   otherwise.
+
+   image_hash is an array and should be of length IMG_HASH_SQRT * (IMG_HASH_SQRT + 1)
+ */
+void calculateImageHash(Magick::Image image, bool * image_hash)
+{
+  size_t length = image.columns() * image.rows();
+  size_t img_hash_index = 0;
+
+  double previous_value = 0.0;
+  for(size_t i = 0; i < length; i++)
+  {
+    /* Check if this pixel is lighter (lower grayscale value) than the previous
+       pixel (pixel to its left).
+     */
+    size_t x = i % (IMG_HASH_SQRT + 1);
+    size_t y = i / (IMG_HASH_SQRT + 1);
+    Magick::Color color = image.pixelColor(x, y);
+    
+    /* Grayscale as the human eye perceives it */
+    double r = 0.21 * color.quantumRed();
+    double g = 0.72 * color.quantumGreen();
+    double b = 0.07 * color.quantumBlue();
+    double value = r + g + b;
+
+    /* If this is a pixel in the "left most" column we don't need to calculate
+       the bool.
+     */
+    if(i % (IMG_HASH_SQRT + 1) != 0)
+    {
+      image_hash[img_hash_index++] = (value > previous_value);
+    }
+
+    previous_value = value;
+  }
+}
+
+/* Calcuate Hamming Distance between two arrays of equal length */
+inline size_t calculateHammingDistance(bool * source_hash, bool * image_hash, size_t length)
+{
+  size_t distance = 0;
+  for(size_t i = 0; i < length; i++)
+  {
+    if(source_hash[i] == image_hash[i]) { distance++; }
+  }
+  return distance;
+}
+
+/* * * * * * * * * * * * * * * * * * *
  *    Static Member Initialization   *
  * * * * * * * * * * * * * * * * * * */
 
@@ -17,6 +71,9 @@ double      Artist::mutation_rate = 0.005;
 double      Artist::crossover_chance = 0.7;
 
 Xover_type  Artist::crossover_type = Xover_type::BIT;
+
+Magick::Image Artist::source_copy;
+bool Artist::source_img_hash[IMG_HASH_SQRT * IMG_HASH_SQRT];
 
 /* * * * * * * * * * * * * * * * * * *
  *  Static Initialization Functions  *
@@ -84,6 +141,25 @@ void Artist::initializeCrossoverChance(double XOVER_CHANCE)
 void Artist::initializeCrossoverType(Xover_type XOVER_TYPE)
 {
   Artist::crossover_type = XOVER_TYPE;
+}
+
+/* Stores a copy of the source image, and a miniture version for scoring. */
+void Artist::initializeSourceImage(Magick::Image source)
+{
+  /* Copy the source into the new images */
+  Artist::source_copy = source;
+  Magick::Image small_source_copy = source;
+
+  /* Generate the dimension string */
+  size_t width  = (IMG_HASH_SQRT + 1);
+  size_t height = IMG_HASH_SQRT;
+  std::string dimension = std::to_string(width) + "x" + std::to_string(height);
+
+  /* Resize the image */
+  small_source_copy.resize(dimension);
+
+  /* Calculate the image hash */
+  calculateImageHash(small_source_copy, Artist::source_img_hash);
 }
 
 /* * * * * * * * * * * * * * * * * * *
@@ -185,16 +261,16 @@ Artist::~Artist()
  */
 void Artist::score(const Magick::Image & source)
 {
-  /* Extract the source dimensions */
-  std::string source_width(std::to_string(source.columns()));
-  std::string source_height(std::to_string(source.rows()));
-  std::string image_dimensions = source_width + "x" + source_height;
+  /* Extract the source dimensions, convert into a Magick Geometry string. */
+  size_t height = source.rows();
+  size_t width  = source.columns();
+  std::string image_dimensions = std::to_string(width) + "x" + std::to_string(height);
 
   /* Extract the RGBA background color from the dominant genome */
   uint8_t * rgba = chromosome.dominant + BG_COLOR_OFFSET;
 
-  /* Create a new canvas, same size as the source with the encoded background 
-     color.
+  /* Create a new image with the same dimensions as the source. Set the 
+     background color to the rgb value in the dominant genome.
    */
   Magick::Color bg_color(rgba[0], rgba[1], rgba[2], rgba[3]);
   Magick::Image canvas(image_dimensions, bg_color);
@@ -203,7 +279,7 @@ void Artist::score(const Magick::Image & source)
   canvas.strokeWidth(0.0);
   canvas.strokeAntiAlias(true);
 
-  /* Create a list of triangles to draw to the canvas */
+  /* Create a list of triangles to draw to the canvas. */
   Triangle * dominant = (Triangle *)(chromosome.dominant + TRIANGLE_LIST_BEGIN);
   Triangle * recessive = (Triangle *)(chromosome.recessive + TRIANGLE_LIST_BEGIN);
   std::vector<Magick::Drawable> triangle_list;
@@ -217,14 +293,7 @@ void Artist::score(const Magick::Image & source)
     
     /* If both triangles were visibilty 0; draw neither */
     if(tri.visible == 0) { continue; }
-
-    /* Turn the uint8_t / 255 into a percentage [0,1) and multiply it by the
-       source image dimensions. 
-     */
-    size_t width = source.columns();
-    size_t height = source.rows();
-
-    /* Transform the triangle into a DrawablePolygons */      
+    
     /* Translate the coordinates */
     Magick::CoordinateList coordinates;
     coordinates.push_back(Magick::Coordinate(UITD(tri.x1, width), UITD(tri.y1, height)));
@@ -245,11 +314,11 @@ void Artist::score(const Magick::Image & source)
 
   /* Draw the triangles! */
   canvas.draw(triangle_list);
+  
+  /* Compare the average pixel error to the original */
+  double rmse = canvas.compare(source, Magick::RootMeanSquaredErrorMetric);
 
-  /* The current fitness function is only the RMSE between the source and the 
-    newly drawn image.
-   */
-  fitness = canvas.compare(source, Magick::RootMeanSquaredErrorMetric);
+  fitness = rmse;
 }
 
 /* Draw and return the image */

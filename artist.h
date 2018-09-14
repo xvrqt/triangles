@@ -23,6 +23,9 @@
 /* Takes a uint8_t and turns it into a double [0,1) */
 #define UITD(num, dimension) (((double)num / 255) * dimension)
 
+/* Defines the dimensions for image hasing */
+#define IMG_HASH_SQRT 16
+
 /* Semantic struct to represent the diploid nature of the genes */
 struct Chromosome {
   uint8_t * dominant;
@@ -74,6 +77,12 @@ class Artist
 
   /* What boundaries are we allowed to crossover at */
   static Xover_type crossover_type;
+
+  /* Copy of the source image and a miniture version for scoring. */
+  static Magick::Image source_copy;
+
+  /* Image hash is stored here */
+  static bool source_img_hash[IMG_HASH_SQRT * IMG_HASH_SQRT];
 
   /* Keep count of the number of Artists. Used to set the location index. */
   static size_t count;
@@ -149,7 +158,10 @@ class Artist
       static void initializeCrossoverChance(double XOVER_CHANCE);
 
       /* Set what boundaries are we allowed to crossover at */
-      static void initializeCrossoverType(Xover_type crossover_type);
+      static void initializeCrossoverType(Xover_type XOVER_TYPE);
+
+      /* Stores a copy of the source image, and a miniture version for scoring. */
+      static void initializeSourceImage(Magick::Image source);
 };
 
 #endif
