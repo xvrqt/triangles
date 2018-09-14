@@ -34,6 +34,14 @@ extern unsigned int RANDOM_SEED;
 /* Chance for a diploid chromosome to crossover. Defaults to 0.7. */
 extern double XOVER_CHANCE;
 
+/* Sets how crossover proceeds.
+   - "bit"      -> the genome will crossover at an individual bit boundary
+   - "byte"     -> the genmoe will crossover will be byte aligned
+   - "triangle" -> the genome will crossover at triangle boundaries
+ */
+enum class Xover_type {BIT, BYTE, TRIANGLE};
+extern Xover_type XOVER_TYPE;
+
 /* Chance, per bit, of being flipped each generation. Defaults to 0.005. */
 extern double MUTATION_RATE;
 

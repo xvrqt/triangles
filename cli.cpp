@@ -23,6 +23,9 @@ unsigned int RANDOM_SEED = time(NULL);
 /* Chance for a diploid chromosome to crossover. */
 double XOVER_CHANCE = 0.7;
 
+/* Where the genome is allowed to crossover */
+Xover_type XOVER_TYPE = Xover_type::BIT;
+
 /* Chance, per bit, of being flipped each generation. Defaults to 0.005. */
 double MUTATION_RATE = 0.005;
 
