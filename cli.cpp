@@ -153,7 +153,6 @@ void parseArgs(int argc, char ** argv)
         }
     }
   
-
     /* Remaining non-option arguments */
 
     /* Image path is the default argument */
