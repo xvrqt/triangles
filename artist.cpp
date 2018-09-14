@@ -196,12 +196,6 @@ void Artist::score(const Magick::Image & source)
     size_t width = source.columns();
     size_t height = source.rows();
 
-    size_t num_w_bits = std::log2(width);
-    size_t num_h_bits = std::log2(height);
-
-    uint8_t mask_w = (uint8_t)GETMASK(0, num_w_bits);
-    uint8_t mask_h = (uint8_t)GETMASK(0, num_h_bits);
-
     /* Transform the triangle into a DrawablePolygons */      
     /* Translate the coordinates */
     Magick::CoordinateList coordinates;
