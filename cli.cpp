@@ -43,6 +43,7 @@ void parseArgs(int argc, char ** argv)
             {"elitism",             required_argument, 0, 'e'},
             {"random-seed",         required_argument, 0, 'r'},
             {"crossover-chance",    required_argument, 0, 'x'},
+            {"crossover-type",      required_argument, 0, 't'},
             {"mutation-rate",       required_argument, 0, 'm'},
             {0, 0, 0, 0}
         };
@@ -51,7 +52,7 @@ void parseArgs(int argc, char ** argv)
         int option_index = 0;
 
         /* Short codes for characters */
-        const char * short_options = "i:g:e:p:n:r:x:m:";
+        const char * short_options = "i:g:e:p:n:r:x:t:m:";
 
         c = getopt_long(argc, argv, short_options, long_options, &option_index);
 
@@ -136,6 +137,20 @@ void parseArgs(int argc, char ** argv)
                     printf("Crossover chance must be between 0.0 and 1.0.\nChance provided:%f", XOVER_CHANCE);
                     exit(1);
                 }
+                break;
+            }
+            case 't': {
+                std::string type(optarg);
+                std::transform(type.begin(), type.end(), type.begin(), ::tolower);
+                if(type == "bit") { XOVER_TYPE = Xover_type::BIT; }
+                else if(type == "byte") { XOVER_TYPE = Xover_type::BYTE; }
+                else if(type == "triangle") { XOVER_TYPE = Xover_type::TRIANGLE; }
+                else
+                { 
+                    printf("Crossover type must be one of bit, byte, triangle.\nType provided: %s\n", optarg);
+                    exit(1);
+                }
+                printf("%d", XOVER_TYPE);
                 break;
             }
             case 'm': {
