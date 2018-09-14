@@ -27,7 +27,7 @@ struct __attribute__((__packed__)) Triangle {
   /* The triangle with the higher visible value is drawn. A value of 0 is not 
      drawn. Equal values are broken in a consistent manner.
    */
-  unsigned short visible : 4;
+  uint8_t visible : 4;
 
   /* Align to the next byte, don't split so the chars are easier to read */
   unsigned : 0;

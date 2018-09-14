@@ -73,15 +73,12 @@ int main(int argc, char ** argv)
 		for(auto a = artists.begin(); a != artists.end(); ++a)
 		{
 			threads.push_back(std::thread([](Artist * a, Magick::Image source_image) {
-				// if(a->getFitness() == std::numeric_limits<double>::max())
-				// {
-					a->crossover();
-					a->mutate();
-					a->score(source_image);
-				// }
+				a->crossover();
+				a->mutate();
+				a->score(source_image);
 			}, (*a), source));
 		}
-		for(auto& th : threads) { th.join(); }
+		for (auto& th : threads) { th.join(); }
 
 		/* Sort the artists from best to worst */
 		std::sort(artists.begin(), artists.end(), [](const Artist * a, const Artist * b) -> bool { 
@@ -135,41 +132,32 @@ int main(int argc, char ** argv)
 		 */
 		std::vector<Artist *> next_generation;
 		next_generation.reserve(POPULATION_SIZE);
-
-		if(POPULATION_SIZE > 1)
+		size_t counter = 0; /* Stop if count > POPULATION_SIZE (only relevant when elitism is set) */
+		for(auto a = artists_proportional.begin(); a != artists_proportional.end(); ++a)
 		{
-			size_t counter = 0; /* Stop if count > POPULATION_SIZE (only relevant when elitism is set) */
-			for(auto a = artists_proportional.begin(); a != artists_proportional.end(); ++a)
+			if(counter >= POPULATION_SIZE) { break; }
+			if(counter < ELITISM)
 			{
-				if(counter >= POPULATION_SIZE) { break; }
-				if(counter < ELITISM)
-				{
-					next_generation.push_back(new Artist(**a));
-					counter++;
-				}
-
-				Artist * mate = NULL;
-				/* Random mate selection based on distance */
-				double sum = 0.0;
-				double zero_to_one = ((double)rand()/RAND_MAX);
-				auto v = location_likelihood_map[(*a)->getLocationIndex()];
-				for(auto it = v.begin(); it != v.end(); ++it)
-				{
-					/* Add the percent distance to the sum */
-					sum += (*it).first;
-					/* If the sum is greater or equal to zero_to_one; mate with
-					   that artist.
-					 */
-					if(sum >= zero_to_one) { mate = location_map[(*it).second]; }
-				}
-
-				/* Push the baby of the artists into the next generation. */
-				next_generation.push_back(new Artist(**a, *mate));
+				next_generation.push_back(new Artist(**a));
 			}
-		}
-		else
-		{
-			next_generation.push_back(new Artist(*artists[0]));
+
+			Artist * mate = NULL;
+			/* Random mate selection based on distance */
+			double sum = 0.0;
+			double zero_to_one = ((double)rand()/RAND_MAX);
+			auto v = location_likelihood_map[(*a)->getLocationIndex()];
+			for(auto it = v.begin(); it != v.end(); ++it)
+			{
+				/* Add the percent distance to the sum */
+				sum += (*it).first;
+				/* If the sum is greater or equal to zero_to_one; mate with
+				   that artist.
+				 */
+				if(sum >= zero_to_one) { mate = location_map[(*it).second]; }
+			}
+
+			/* Push the baby of the artists into the next generation. */
+			next_generation.push_back(new Artist(**a, *mate));
 		}
 
 		/* Print out the best fitness and save the best image */

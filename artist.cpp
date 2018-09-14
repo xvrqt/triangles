@@ -6,23 +6,11 @@ std::independent_bits_engine<std::default_random_engine, 8, unsigned char> Artis
 
 std::vector<std::vector<std::pair<double, size_t>>> Artist::location_liklihood_map; 
 
-double Artist::cosine[32][32];
-double Artist::mutation_rate = 0.005;
 double Artist::crossover_chance = 0.7;
-
+double Artist::mutation_rate = 0.005;
 size_t Artist::number_of_triangles = 10;
 size_t Artist::genome_length = (Artist::number_of_triangles * sizeof(Triangle) + 4 * sizeof(uint8_t));
 size_t Artist::count = 0;
-
-/* Helper functions for computing the DCT */
-const double SQRT2o2 = 1.414213562373095048801688724209 * 0.5;
-const double inv16 = 1.0 / 16.0;
-
-double alpha(size_t i)
-{
-  if (i == 0) { return SQRT2o2 * 0.5; }
-  else { return 0.5; }
-}
 
 /* Calls all the other initialization functions */
 void Artist::initialization(size_t GENOME_LENGTH, double MUTATION_RATE, double XOVER_CHANCE, size_t RANDOM_SEED)
@@ -31,14 +19,6 @@ void Artist::initialization(size_t GENOME_LENGTH, double MUTATION_RATE, double X
   Artist::initializeMutationRate(MUTATION_RATE);
   Artist::initializeCrossoverChance(XOVER_CHANCE);
   Artist::initializeGenomeLength(GENOME_LENGTH);
-
-  for(size_t i = 0; i < 32; i++)
-  {
-    for(size_t j = 0; j < 32; j++)
-    {
-       Artist::cosine[j][i] = std::cos(M_PI * j * (2.0 * i + 1) * inv16);
-    }
-  }
 }
 
 /* Set up the static random byte generator */
@@ -210,9 +190,6 @@ void Artist::score(const Magick::Image & source)
   Triangle * recessive = (Triangle *)(chromosome.recessive + TRIANGLE_LIST_BEGIN);
   std::vector<Magick::Drawable> triangle_list;
 
-  size_t width = source.columns();
-  size_t height = source.rows();
-
   for(size_t i = 0; i < GENOME_LENGTH; i++)
   {
     Triangle tri_dom = dominant[i];
@@ -227,6 +204,9 @@ void Artist::score(const Magick::Image & source)
     /* Create masks so that it only draws (roughly) within the image's 
        boundaries.
      */
+    size_t width = source.columns();
+    size_t height = source.rows();
+
     size_t num_w_bits = std::log2(width);
     size_t num_h_bits = std::log2(height);
 
@@ -255,99 +235,10 @@ void Artist::score(const Magick::Image & source)
   /* Draw the triangles! */
   canvas.draw(triangle_list);
 
-  /* Calculate the RMSE for half of the fitness equation */
-  double rmse = canvas.compare(source, Magick::RootMeanSquaredErrorMetric);
-
-  // std::vector<double> canvas_dct(8 * 8); 
-  // std::vector<double> source_dct(8 * 8);
-
-  /* Make the images much smaller */
-  // canvas.resize("32x32");
-  // Magick::Image smol_source = source;
-  // smol_source.resize("32x32");
-
-  /* Compute the DCT for the source and canvas */
-  // for(size_t y = 0; y < 8; y++)
-  // {
-  //   for(size_t x = 0; x < 8; x++)
-  //   {
-  //     source_dct[y * 8 + x] = 0;
-  //     canvas_dct[y * 8 + x] = 0;
-  //     for(size_t u = 0; u < 32; u++)
-  //     {
-  //       for(size_t v = 0; v < 32; v++)
-  //       {
-  //         Magick::Color source_color = smol_source.pixelColor(u, v);
-  //         Magick::Color canvas_color = canvas.pixelColor(u, v);
-
-  //         double source_gray = 0.21 * source_color.quantumRed() + 0.72 * source_color.quantumGreen() + 0.07 * source_color.quantumBlue();
-  //         double canvas_gray = 0.21 * canvas_color.quantumRed() + 0.72 * canvas_color.quantumGreen() + 0.07 * canvas_color.quantumBlue();
-
-  //         source_dct[y * 8 + x] += alpha(u) * alpha(v) * source_gray * Artist::cosine[u][x] * Artist::cosine[v][y];
-  //         canvas_dct[y * 8 + x] += alpha(u) * alpha(v) * canvas_gray * Artist::cosine[u][x] * Artist::cosine[v][y];
-  //       }
-  //     }
-  //   }
-  // }
-
-  /* Compute the mean coefficient for each DCT matrix */
-  // double avg_canvas_ce = 0.0;
-  // double avg_source_ce = 0.0;
-  // for(size_t i = 0; i < canvas_dct.size(); i++)
-  // {
-  //   avg_canvas_ce += canvas_dct[i];
-  //   avg_source_ce += source_dct[i];
-  // }
-  // avg_canvas_ce /= canvas_dct.size();
-  // avg_source_ce /= source_dct.size();
-
-  /* For each CE above the mean set it to 1. Below, set to 0. Compute the 
-     Hamming distance as you do this.
+  /* The current fitness function is only the RMSE between the source and the 
+    newly drawn image.
    */
-  // int h_dist = 0;
-  // for(size_t i = 0; i < canvas_dct.size(); i++)
-  // {
-  //   canvas_dct[i] = (canvas_dct[i] > avg_canvas_ce) ? 1.0 : 0.0;
-  //   source_dct[i] = (source_dct[i] > avg_source_ce) ? 1.0 : 0.0;
-  //   if(canvas_dct[i] == source_dct[i]) { h_dist++; }
-  // }
-
-  /* If all the bits are different, then the image is still pretty close in form. */
-  // h_dist = std::abs(32 - h_dist);
-  // double form_fitness = 1.0 - ((double)h_dist / 32);
-
-  /* Quick Image Hash */
-  canvas.resize("9x8");
-  Magick::Image smol_source = source;
-  smol_source.resize("9x8");
-
-  double source_grayscale[8][9];
-  double canvas_grayscale[8][9];
-
-  size_t h_dist = 0;
-  for(size_t u = 0; u < 8; u++)
-  {
-    for(size_t v = 0; v < 9; v++)
-    {
-      Magick::Color source_color = smol_source.pixelColor(u, v);
-      Magick::Color canvas_color = canvas.pixelColor(u, v);
-
-      source_grayscale[u][v] = 0.21 * source_color.quantumRed() + 0.72 * source_color.quantumGreen() + 0.07 * source_color.quantumBlue();
-      canvas_grayscale[u][v] = 0.21 * canvas_color.quantumRed() + 0.72 * canvas_color.quantumGreen() + 0.07 * canvas_color.quantumBlue();
-
-      if(v != 0)
-      {
-        bool s = (source_grayscale[u][v - 1] > source_grayscale[u][v]);
-        bool c = (canvas_grayscale[u][v - 1] > canvas_grayscale[u][v]);
-        if(s != c) { h_dist++; }
-      }
-    }
-  }
-
-  h_dist = std::abs(32 - (int)h_dist);
-  double form_fitness = 1.0 - ((double)h_dist / 32);
-
-  fitness = rmse + form_fitness;
+  fitness = canvas.compare(source, Magick::RootMeanSquaredErrorMetric);
 }
 
 /* Draw and return the image */
@@ -461,9 +352,6 @@ void Artist::crossover()
          [(byte_index + 1), genome_length].
        */
       size_t byte_index = bit_index / 8;
-      // double div = (RAND_MAX/(Artist::number_of_triangles - 1));
-      // size_t byte_index = 4 + ((size_t)(std::floor(((double)rand()/div))) * 12);
-      // std::cout << "byte index: " << byte_index << std::endl;
       /* There are no bytes to copy when crossover happens in the last byte */
       if(byte_index < (Artist::genome_length - 1))
       {
@@ -478,22 +366,22 @@ void Artist::crossover()
         free(byte_swap_space);
       }
 
-      // /* For the byte that is split, swap the bits */
+      /* For the byte that is split, swap the bits */
       uint8_t dom_byte = chromosome.dominant[byte_index];
       uint8_t rec_byte = chromosome.recessive[byte_index];
       uint8_t intra_byte_index = bit_index % 8;
       uint8_t num_bits = 8 - intra_byte_index;
 
-      // /* Prepare the bytes for writing to */
+      /* Prepare the bytes for writing to */
       uint8_t mask1 = (uint8_t)GETMASK(intra_byte_index, num_bits);
       chromosome.dominant[byte_index] |= mask1;
       chromosome.recessive[byte_index] |= mask1;
 
-      // /* Prepare the bits to be written */
+      /* Prepare the bits to be written */
       uint8_t dom_bits = (dom_byte & mask1) | (~mask1);
       uint8_t rec_bits = (rec_byte & mask1) | (~mask1);
 
-      // /* Write the bits to the byte */
+      /* Write the bits to the byte */
       chromosome.dominant[byte_index] &= rec_bits;
       chromosome.recessive[byte_index] &= dom_bits;
   }
