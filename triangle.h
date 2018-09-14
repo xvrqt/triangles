@@ -13,37 +13,31 @@ Packed to preserve alignment.
 
 struct __attribute__((__packed__)) Triangle {
   /* First Point */
-  unsigned short x1 : 10;
-  unsigned short y1 : 10;
+  uint8_t x1 : 8;
+  uint8_t y1 : 8;
   
   /* Second Point */
-  unsigned short x2 : 10;
-  unsigned short y2 : 10;
+  uint8_t x2 : 8;
+  uint8_t y2 : 8;
 
   /* Third Point */
-  unsigned short x3 : 10;
-  unsigned short y3 : 10;
-
-  /* The triangle with the higher visible value is drawn. A value of 0 is not 
-     drawn. Equal values are broken in a consistent manner.
-   */
-  uint8_t visible : 4;
-
-  /* Align to the next byte, don't split so the chars are easier to read */
-  unsigned : 0;
+  uint8_t x3 : 8;
+  uint8_t y3 : 8;
 
   /* Color */
-  unsigned char r : 8;
-  unsigned char g : 8;
-  unsigned char b : 8;
-  unsigned char a : 8;
+  uint8_t r : 8;
+  uint8_t g : 8;
+  uint8_t b : 8;
+  uint8_t a : 8;
+
+  /* If visible */
+  uint8_t visible : 8;
 };
 
 /* Mark important offsets */
 extern size_t BG_COLOR_OFFSET;
 extern size_t BG_COLOR_SIZE;
 extern size_t TRIANGLE_LIST_BEGIN;
-extern size_t TRIANGLE_SIZE;
 
 /* Compare two triangles */
 bool operator==(const Triangle& lhs, const Triangle& rhs);

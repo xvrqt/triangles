@@ -82,16 +82,6 @@ Artist::Artist()
     chromosome.recessive[i] = rand_byte_generator(); 
   }
 
-  /* Go through and ensure only the first triangle is visible */
-  Triangle * dominant = (Triangle *)(chromosome.dominant + TRIANGLE_LIST_BEGIN);
-  Triangle * recessive = (Triangle *)(chromosome.recessive + TRIANGLE_LIST_BEGIN);
-  for(size_t i = 0; i < Artist::number_of_triangles; i++)
-  {
-    /* 0111 - more mutation resiliant */
-    dominant[i].visible = (i == 0) ? 7 : 0;
-    recessive[i].visible = 0;
-  }
-
   /* Set the fitness as high as possible to ensure it's replaced. */
   fitness = std::numeric_limits<double>::max();
   expected_reproduction = 1.0; /* This will be overwritten later */
@@ -192,10 +182,9 @@ void Artist::score(const Magick::Image & source)
 
   for(size_t i = 0; i < GENOME_LENGTH; i++)
   {
-    Triangle tri_dom = dominant[i];
-    Triangle tri_rec = recessive[i];
+    Triangle const & tri_dom = dominant[i];
+    Triangle const & tri_rec = recessive[i];
     
-    /* Draw the triangle with the higher visible parameter */
     Triangle tri = (tri_dom.visible >= tri_rec.visible) ? tri_dom : tri_rec;
     
     /* If both triangles were visibilty 0; draw neither */
@@ -210,8 +199,8 @@ void Artist::score(const Magick::Image & source)
     size_t num_w_bits = std::log2(width);
     size_t num_h_bits = std::log2(height);
 
-    unsigned short mask_w = (unsigned short)GETMASK(0, num_w_bits);
-    unsigned short mask_h = (unsigned short)GETMASK(0, num_h_bits);
+    uint8_t mask_w = (uint8_t)GETMASK(0, num_w_bits);
+    uint8_t mask_h = (uint8_t)GETMASK(0, num_h_bits);
 
     /* Transform the triangle into a DrawablePolygons */      
     /* Translate the coordinates */
