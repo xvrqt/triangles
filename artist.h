@@ -28,9 +28,6 @@ struct Chromosome {
   uint8_t * dominant;
   uint8_t * recessive;
 
-  /* Length in bytes */
-  size_t length;
-
   /* Crossover point */
   size_t crossover_point = 0;
 };
@@ -50,7 +47,7 @@ class Artist
   /* The genetic information */
   Chromosome chromosome;
 
-  /* Fitnesss of the Artist */
+  /* Fitnesss of the Artist - lower is better */
   double fitness;
 
   /* The expected amount of times an Artist will reproduce */
@@ -59,32 +56,27 @@ class Artist
   /* Index into where the artist lives in the Artist Location Map */
   size_t location_index;
 
+  /* Static random engine */
+  static std::default_random_engine rand_engine;
+  static std::independent_bits_engine<std::default_random_engine, 8, unsigned char> rand_byte_generator;
+
   /* Max number of triangles in the chromosome */
   static size_t number_of_triangles;
 
   /* Length of the genome in bytes */
   static size_t genome_length;
 
-  /* Static random engine */
-  static std::default_random_engine rand_engine;
-  static std::independent_bits_engine<std::default_random_engine, 8, unsigned char> rand_byte_generator;
+  /* Chance, per bit, to be flipped per generation */
+  static double mutation_rate;
 
   /* Chance to cross over */
   static double crossover_chance;
 
-  /* Chance, per bit, to be flipped per generation */
-  static double mutation_rate;
+  /* What boundaries are we allowed to crossover at */
+  static Xover_type crossover_type;
 
   /* Keep count of the number of Artists. Used to set the location index. */
   static size_t count;
-
-  /* Precompute the liklihood of mating based on location and store it in this
-     table. The ith index of the first vector returns a vector of pairs. These 
-     are sorted so closest points have lower indices. Randomly select a number
-     between [0,1) and sum the liklihoods until sum > rand. The second part of 
-     the pair is the location index of Artist to mate with.
-   */
-  static std::vector<std::vector<std::pair<double, size_t>>> location_liklihood_map; 
 
   /* Generates the artist's location */
 
@@ -98,14 +90,14 @@ class Artist
          for freeing the returned baby.
        */
       Artist(const Artist &a, const Artist &b);
-      
-      /* Clean up the very obvious sources of memory leaks (chromosome) */
-      ~Artist();
 
       /* Allows us to sort without copying. Sorts via fitness. */
       bool operator <(const Artist &a) const;
       Artist(Artist const &that);
       void operator=(Artist const &that);
+      
+      /* Clean up the very obvious sources of memory leaks (chromosome) */
+      ~Artist();
 
       /* Expresses the genotype, compares it to the submitted image and scores
        * it based on similarity.
@@ -142,19 +134,22 @@ class Artist
       /* Convenience funtion that calls the other initialization functions and ensures
          they are called in the correct order.
        */
-      static void initialization(size_t GENOME_LENGTH, double MUTATION_RATE, double XOVER_CHANCE, size_t RANDOM_SEED);
+      static void initialization(size_t RANDOM_SEED, size_t GENOME_LENGTH, double MUTATION_RATE, double XOVER_CHANCE, Xover_type XOVER_TYPE);
 
       /* Seed the random byte generator */
       static void initializeRandomByteGenerator(size_t RANDOM_SEED);
-
-      /* Set the crossover chance */
-      static void initializeCrossoverChance(double XOVER_CHANCE);
 
       /* Set the mutation rate */
       static void initializeMutationRate(double MUTATION_RATE);
 
       /* Set the max number of triangles, and genome byte length */
       static void initializeGenomeLength(size_t GENOME_LENGTH);
+
+      /* Set the crossover chance */
+      static void initializeCrossoverChance(double XOVER_CHANCE);
+
+      /* Set what boundaries are we allowed to crossover at */
+      static void initializeCrossoverType(Xover_type crossover_type);
 };
 
 #endif
