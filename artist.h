@@ -75,6 +75,9 @@ class Artist
   /* Keep count of the number of Artists. Used to set the location index. */
   static size_t count;
 
+  /* Stores the precomputed the cosine matrix for DCT scoring in score() */
+  static double cosine[32][32];
+
   /* Precompute the liklihood of mating based on location and store it in this
      table. The ith index of the first vector returns a vector of pairs. These 
      are sorted so closest points have lower indices. Randomly select a number
