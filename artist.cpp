@@ -1,24 +1,37 @@
 #include "artist.h"
 
-/* Static member initialization */
+/* * * * * * * * * * * * * * * * * * *
+ *    Static Member Initialization   *
+ * * * * * * * * * * * * * * * * * * */
+
+/* Random engine, independent bytes generator */
 std::default_random_engine Artist::rand_engine;
 std::independent_bits_engine<std::default_random_engine, 8, unsigned char> Artist::rand_byte_generator;
 
-std::vector<std::vector<std::pair<double, size_t>>> Artist::location_liklihood_map; 
+/* Default Artist values */
+size_t      Artist::number_of_triangles = 10;
+size_t      Artist::genome_length = (Artist::number_of_triangles * sizeof(Triangle) + 4 * sizeof(uint8_t));
+size_t      Artist::count = 0;
 
-double Artist::crossover_chance = 0.7;
-double Artist::mutation_rate = 0.005;
-size_t Artist::number_of_triangles = 10;
-size_t Artist::genome_length = (Artist::number_of_triangles * sizeof(Triangle) + 4 * sizeof(uint8_t));
-size_t Artist::count = 0;
+double      Artist::mutation_rate = 0.005;
+double      Artist::crossover_chance = 0.7;
 
-/* Calls all the other initialization functions */
-void Artist::initialization(size_t GENOME_LENGTH, double MUTATION_RATE, double XOVER_CHANCE, size_t RANDOM_SEED)
+Xover_type  Artist::crossover_type = Xover_type::BIT;
+
+/* * * * * * * * * * * * * * * * * * *
+ *  Static Initialization Functions  *
+ * * * * * * * * * * * * * * * * * * */
+
+/* Calls all the other initialization functions - allows the Artist class to be
+   setup in one step.
+ */
+void Artist::initialization(size_t RANDOM_SEED, size_t GENOME_LENGTH, double MUTATION_RATE, double XOVER_CHANCE, Xover_type XOVER_TYPE)
 {
   Artist::initializeRandomByteGenerator(RANDOM_SEED);
+  Artist::initializeGenomeLength(GENOME_LENGTH);
   Artist::initializeMutationRate(MUTATION_RATE);
   Artist::initializeCrossoverChance(XOVER_CHANCE);
-  Artist::initializeGenomeLength(GENOME_LENGTH);
+  Artist::initializeCrossoverType(XOVER_TYPE);
 }
 
 /* Set up the static random byte generator */
@@ -27,30 +40,6 @@ void Artist::initializeRandomByteGenerator(size_t RANDOM_SEED)
   Artist::rand_engine.seed(RANDOM_SEED);
   std::independent_bits_engine<std::default_random_engine, 8, unsigned char> dummy(Artist::rand_engine);
   Artist::rand_byte_generator = dummy;
-}
-
-/* Set the crossover chance */
-void Artist::initializeCrossoverChance(double XOVER_CHANCE)
-{
-  if(XOVER_CHANCE >= 0 && XOVER_CHANCE <= 1) { Artist::crossover_chance = XOVER_CHANCE; }
-  else 
-  { 
-    std::cerr << "Crossover chance must be between 0.0 and 1.0.\nChance \
-                  provided: " << XOVER_CHANCE << std::endl;
-    exit(1);
-  }
-}
-
-/* Set the mutation rate */
-void Artist::initializeMutationRate(double MUTATION_RATE)
-{
-  if(MUTATION_RATE >= 0 && MUTATION_RATE <= 1) { Artist::mutation_rate = MUTATION_RATE; }
-  else 
-  { 
-    std::cerr << "Mutation rate must be between 0.0 and 1.0.\nRate \
-                  provided: " << MUTATION_RATE << std::endl;
-    exit(1);
-  }
 }
 
 /* Set the max number of triangles, and genome byte length */
@@ -66,6 +55,41 @@ void Artist::initializeGenomeLength(size_t GENOME_LENGTH)
   size_t size_of_triangles = (Artist::number_of_triangles * sizeof(Triangle));
   Artist::genome_length = size_of_bg_rbg + size_of_triangles;
 }
+
+/* Set the mutation rate */
+void Artist::initializeMutationRate(double MUTATION_RATE)
+{
+  if(MUTATION_RATE >= 0 && MUTATION_RATE <= 1) { Artist::mutation_rate = MUTATION_RATE; }
+  else 
+  { 
+    std::cerr << "Mutation rate must be between 0.0 and 1.0.\nRate \
+                  provided: " << MUTATION_RATE << std::endl;
+    exit(1);
+  }
+}
+
+/* Set the crossover chance */
+void Artist::initializeCrossoverChance(double XOVER_CHANCE)
+{
+  if(XOVER_CHANCE >= 0 && XOVER_CHANCE <= 1) { Artist::crossover_chance = XOVER_CHANCE; }
+  else 
+  { 
+    std::cerr << "Crossover chance must be between 0.0 and 1.0.\nChance \
+                  provided: " << XOVER_CHANCE << std::endl;
+    exit(1);
+  }
+}
+
+/* Set what boundaries are we allowed to crossover at */
+void Artist::initializeCrossoverType(Xover_type XOVER_TYPE)
+{
+  Artist::crossover_type = XOVER_TYPE;
+}
+
+/* * * * * * * * * * * * * * * * * * *
+ *            Contructors            *
+ * * * * * * * * * * * * * * * * * * */
+
 
 /* Generates an artist with a random genotype, with only the first
    triangle set as visible.
@@ -151,6 +175,10 @@ Artist::~Artist()
   free(chromosome.dominant);
   free(chromosome.recessive);
 }
+
+/* * * * * * * * * * * * * * * * * * *
+ *         Member Functions          *
+ * * * * * * * * * * * * * * * * * * */
 
 /* Expresses the genotype, compares it to the submitted image and scores
  * it based on similarity. Sets and returns the fitness.

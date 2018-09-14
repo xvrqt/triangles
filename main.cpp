@@ -2,13 +2,14 @@
 
 int main(int argc, char ** argv)
 {	
-	/* Turns command line arguments into hyper parameters */
+	/* Turns command line arguments into hyper parameters. */
 	parseArgs(argc, argv);
+	
 	/* Allows use of ImageMagick */
 	Magick::InitializeMagick(*argv);
 
 	/* Initialize Artist settings with runtime parameters. */
-	Artist::initialization(GENOME_LENGTH, MUTATION_RATE, XOVER_CHANCE, RANDOM_SEED);
+	Artist::initialization(RANDOM_SEED, GENOME_LENGTH, MUTATION_RATE, XOVER_CHANCE, XOVER_TYPE);
 
 	/* Precompute locations and distances between them */
 	auto location_likelihood_map = getLocationLikelihoodMap(POPULATION_SIZE);

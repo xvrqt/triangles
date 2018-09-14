@@ -72,19 +72,14 @@ class Artist
   /* Chance to cross over */
   static double crossover_chance;
 
+  /* What boundaries are we allowed to crossover at */
+  static Xover_type crossover_type;
+
   /* Chance, per bit, to be flipped per generation */
   static double mutation_rate;
 
   /* Keep count of the number of Artists. Used to set the location index. */
   static size_t count;
-
-  /* Precompute the liklihood of mating based on location and store it in this
-     table. The ith index of the first vector returns a vector of pairs. These 
-     are sorted so closest points have lower indices. Randomly select a number
-     between [0,1) and sum the liklihoods until sum > rand. The second part of 
-     the pair is the location index of Artist to mate with.
-   */
-  static std::vector<std::vector<std::pair<double, size_t>>> location_liklihood_map; 
 
   /* Generates the artist's location */
 
@@ -142,19 +137,22 @@ class Artist
       /* Convenience funtion that calls the other initialization functions and ensures
          they are called in the correct order.
        */
-      static void initialization(size_t GENOME_LENGTH, double MUTATION_RATE, double XOVER_CHANCE, size_t RANDOM_SEED);
+      static void initialization(size_t RANDOM_SEED, size_t GENOME_LENGTH, double MUTATION_RATE, double XOVER_CHANCE, Xover_type XOVER_TYPE);
 
       /* Seed the random byte generator */
       static void initializeRandomByteGenerator(size_t RANDOM_SEED);
-
-      /* Set the crossover chance */
-      static void initializeCrossoverChance(double XOVER_CHANCE);
 
       /* Set the mutation rate */
       static void initializeMutationRate(double MUTATION_RATE);
 
       /* Set the max number of triangles, and genome byte length */
       static void initializeGenomeLength(size_t GENOME_LENGTH);
+
+      /* Set the crossover chance */
+      static void initializeCrossoverChance(double XOVER_CHANCE);
+
+      /* Set what boundaries are we allowed to crossover at */
+      static void initializeCrossoverType(Xover_type crossover_type);
 };
 
 #endif
