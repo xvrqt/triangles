@@ -10,7 +10,7 @@
 
    image_hash is an array and should be of length IMG_HASH_SQRT * (IMG_HASH_SQRT + 1)
  */
-void calculateImageHash(Magick::Image image, bool * image_hash)
+void calculateImageHash(Magick::Image const & image, bool * image_hash)
 {
   size_t length = image.columns() * image.rows();
   size_t img_hash_index = 0;
@@ -49,9 +49,63 @@ inline size_t calculateHammingDistance(bool * source_hash, bool * image_hash, si
   size_t distance = 0;
   for(size_t i = 0; i < length; i++)
   {
-    if(source_hash[i] == image_hash[i]) { distance++; }
+    if(source_hash[i] != image_hash[i]) { distance++; }
   }
   return distance;
+}
+
+/* Draws a list of triangles and returns the image */
+Magick::Image drawTriangles(Chromosome const & chromosome, size_t width, size_t height)
+{
+  /* Extract background color */
+  uint8_t * rgba = chromosome.dominant + BG_COLOR_OFFSET;
+  Magick::Color bg_color(rgba[0], rgba[1], rgba[2], rgba[3]);
+
+  /* Create a canvas to draw upon. */
+  std::string image_dimensions = std::to_string(width) + "x" + std::to_string(height);
+  Magick::Image canvas(image_dimensions, bg_color);
+
+  /* Set some drawing defaults on the image */
+  canvas.strokeWidth(0.0);
+  canvas.strokeAntiAlias(true);
+
+  /* Create a list of triangles to draw to the canvas. */
+  Triangle * dominant = (Triangle *)(chromosome.dominant + TRIANGLE_LIST_BEGIN);
+  Triangle * recessive = (Triangle *)(chromosome.recessive + TRIANGLE_LIST_BEGIN);
+  std::vector<Magick::Drawable> triangle_list;
+
+  for(size_t i = 0; i < GENOME_LENGTH; i++)
+  {
+    Triangle const & tri_dom = dominant[i];
+    Triangle const & tri_rec = recessive[i];
+    
+    Triangle tri = (tri_dom.visible >= tri_rec.visible) ? tri_dom : tri_rec;
+    
+    /* If both triangles were visibilty 0; draw neither */
+    if(tri.visible == 0) { continue; }
+    
+    /* Translate the coordinates */
+    Magick::CoordinateList coordinates;
+    coordinates.push_back(Magick::Coordinate(UITD(tri.x1, width), UITD(tri.y1, height)));
+    coordinates.push_back(Magick::Coordinate(UITD(tri.x2, width), UITD(tri.y2, height)));
+    coordinates.push_back(Magick::Coordinate(UITD(tri.x3, width), UITD(tri.y3, height)));
+    Magick::DrawablePolyline drawable_triangle(coordinates);
+
+    /* Set the fill/stroke color */
+    Magick::Color color(tri.r, tri.g, tri.b, tri.a);
+    canvas.strokeColor(color);
+    canvas.fillColor(color);
+
+    /* Push the colors and then the shape onto the drawable lsit */
+    triangle_list.push_back(Magick::DrawableFillColor(color));
+    triangle_list.push_back(Magick::DrawableStrokeColor(color));
+    triangle_list.push_back(drawable_triangle);
+  }
+
+  /* Draw the triangles! */
+  canvas.draw(triangle_list);
+
+  return canvas;
 }
 
 /* * * * * * * * * * * * * * * * * * *
@@ -144,7 +198,7 @@ void Artist::initializeCrossoverType(Xover_type XOVER_TYPE)
 }
 
 /* Stores a copy of the source image, and a miniture version for scoring. */
-void Artist::initializeSourceImage(Magick::Image source)
+void Artist::initializeSourceImage(Magick::Image const & source)
 {
   /* Copy the source into the new images */
   Artist::source_copy = source;
@@ -153,10 +207,10 @@ void Artist::initializeSourceImage(Magick::Image source)
   /* Generate the dimension string */
   size_t width  = (IMG_HASH_SQRT + 1);
   size_t height = IMG_HASH_SQRT;
-  std::string dimension = std::to_string(width) + "x" + std::to_string(height);
+  std::string dimensions = "!" + std::to_string(width) + "x!" + std::to_string(height);
 
   /* Resize the image */
-  small_source_copy.resize(dimension);
+  small_source_copy.resize(dimensions);
 
   /* Calculate the image hash */
   calculateImageHash(small_source_copy, Artist::source_img_hash);
@@ -261,64 +315,39 @@ Artist::~Artist()
  */
 void Artist::score(const Magick::Image & source)
 {
-  /* Extract the source dimensions, convert into a Magick Geometry string. */
-  size_t height = source.rows();
+  /* Extract the source dimensions. */
   size_t width  = source.columns();
-  std::string image_dimensions = std::to_string(width) + "x" + std::to_string(height);
+  size_t height = source.rows();
 
-  /* Extract the RGBA background color from the dominant genome */
-  uint8_t * rgba = chromosome.dominant + BG_COLOR_OFFSET;
-
-  /* Create a new image with the same dimensions as the source. Set the 
-     background color to the rgb value in the dominant genome.
-   */
-  Magick::Color bg_color(rgba[0], rgba[1], rgba[2], rgba[3]);
-  Magick::Image canvas(image_dimensions, bg_color);
-
-  /* Set some drawing defaults on the image */
-  canvas.strokeWidth(0.0);
-  canvas.strokeAntiAlias(true);
-
-  /* Create a list of triangles to draw to the canvas. */
-  Triangle * dominant = (Triangle *)(chromosome.dominant + TRIANGLE_LIST_BEGIN);
-  Triangle * recessive = (Triangle *)(chromosome.recessive + TRIANGLE_LIST_BEGIN);
-  std::vector<Magick::Drawable> triangle_list;
-
-  for(size_t i = 0; i < GENOME_LENGTH; i++)
-  {
-    Triangle const & tri_dom = dominant[i];
-    Triangle const & tri_rec = recessive[i];
-    
-    Triangle tri = (tri_dom.visible >= tri_rec.visible) ? tri_dom : tri_rec;
-    
-    /* If both triangles were visibilty 0; draw neither */
-    if(tri.visible == 0) { continue; }
-    
-    /* Translate the coordinates */
-    Magick::CoordinateList coordinates;
-    coordinates.push_back(Magick::Coordinate(UITD(tri.x1, width), UITD(tri.y1, height)));
-    coordinates.push_back(Magick::Coordinate(UITD(tri.x2, width), UITD(tri.y2, height)));
-    coordinates.push_back(Magick::Coordinate(UITD(tri.x3, width), UITD(tri.y3, height)));
-    Magick::DrawablePolyline drawable_triangle(coordinates);
-
-    /* Set the fill/stroke color */
-    Magick::Color color(tri.r, tri.g, tri.b, tri.a);
-    canvas.strokeColor(color);
-    canvas.fillColor(color);
-
-    /* Push the colors and then the shape onto the drawable lsit */
-    triangle_list.push_back(Magick::DrawableFillColor(color));
-    triangle_list.push_back(Magick::DrawableStrokeColor(color));
-    triangle_list.push_back(drawable_triangle);
-  }
-
-  /* Draw the triangles! */
-  canvas.draw(triangle_list);
+  /* Express the phenotype */
+  Magick::Image canvas = drawTriangles(chromosome, width, height);
   
   /* Compare the average pixel error to the original */
   double rmse = canvas.compare(source, Magick::RootMeanSquaredErrorMetric);
 
-  fitness = rmse;
+  /* Resize the image, take its hash and compare to the source */
+  size_t hash_width  = (IMG_HASH_SQRT + 1);
+  size_t hash_height = IMG_HASH_SQRT;
+
+  std::string dimensions = "!" + std::to_string(hash_width) + "x!" + std::to_string(hash_height);
+  canvas.resize(dimensions);
+
+  /* Calculate the image hash */
+  size_t hash_length = IMG_HASH_SQRT * IMG_HASH_SQRT;
+  bool image_hash[hash_length];
+
+  calculateImageHash(canvas, image_hash);
+
+  /* Calculate the Hamming Distance */
+  size_t h_dist = calculateHammingDistance(Artist::source_img_hash, image_hash, hash_length);
+
+  /* Normalize */
+  size_t half = (hash_length) / 2;
+  int penalty = std::abs((int)half - (int)h_dist);
+  double form_fitness = 1.0 - ((double)penalty / half);
+
+  /* Combined fitness */
+  fitness = rmse + form_fitness;
 }
 
 /* Draw and return the image */

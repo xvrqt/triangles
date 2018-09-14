@@ -161,7 +161,7 @@ class Artist
       static void initializeCrossoverType(Xover_type XOVER_TYPE);
 
       /* Stores a copy of the source image, and a miniture version for scoring. */
-      static void initializeSourceImage(Magick::Image source);
+      static void initializeSourceImage(Magick::Image const & source);
 };
 
 #endif
