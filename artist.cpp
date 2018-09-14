@@ -54,60 +54,6 @@ inline size_t calculateHammingDistance(bool * source_hash, bool * image_hash, si
   return distance;
 }
 
-/* Draws a list of triangles and returns the image */
-Magick::Image drawTriangles(Chromosome const & chromosome, size_t width, size_t height)
-{
-  /* Extract background color */
-  uint8_t * rgba = chromosome.dominant + BG_COLOR_OFFSET;
-  Magick::Color bg_color(rgba[0], rgba[1], rgba[2], rgba[3]);
-
-  /* Create a canvas to draw upon. */
-  std::string image_dimensions = std::to_string(width) + "x" + std::to_string(height);
-  Magick::Image canvas(image_dimensions, bg_color);
-
-  /* Set some drawing defaults on the image */
-  canvas.strokeWidth(0.0);
-  canvas.strokeAntiAlias(true);
-
-  /* Create a list of triangles to draw to the canvas. */
-  Triangle * dominant = (Triangle *)(chromosome.dominant + TRIANGLE_LIST_BEGIN);
-  Triangle * recessive = (Triangle *)(chromosome.recessive + TRIANGLE_LIST_BEGIN);
-  std::vector<Magick::Drawable> triangle_list;
-
-  for(size_t i = 0; i < GENOME_LENGTH; i++)
-  {
-    Triangle const & tri_dom = dominant[i];
-    Triangle const & tri_rec = recessive[i];
-    
-    Triangle tri = (tri_dom.visible >= tri_rec.visible) ? tri_dom : tri_rec;
-    
-    /* If both triangles were visibilty 0; draw neither */
-    if(tri.visible == 0) { continue; }
-    
-    /* Translate the coordinates */
-    Magick::CoordinateList coordinates;
-    coordinates.push_back(Magick::Coordinate(UITD(tri.x1, width), UITD(tri.y1, height)));
-    coordinates.push_back(Magick::Coordinate(UITD(tri.x2, width), UITD(tri.y2, height)));
-    coordinates.push_back(Magick::Coordinate(UITD(tri.x3, width), UITD(tri.y3, height)));
-    Magick::DrawablePolyline drawable_triangle(coordinates);
-
-    /* Set the fill/stroke color */
-    Magick::Color color(tri.r, tri.g, tri.b, tri.a);
-    canvas.strokeColor(color);
-    canvas.fillColor(color);
-
-    /* Push the colors and then the shape onto the drawable lsit */
-    triangle_list.push_back(Magick::DrawableFillColor(color));
-    triangle_list.push_back(Magick::DrawableStrokeColor(color));
-    triangle_list.push_back(drawable_triangle);
-  }
-
-  /* Draw the triangles! */
-  canvas.draw(triangle_list);
-
-  return canvas;
-}
-
 /* * * * * * * * * * * * * * * * * * *
  *    Static Member Initialization   *
  * * * * * * * * * * * * * * * * * * */
@@ -230,10 +176,22 @@ Artist::Artist()
   chromosome.recessive = (uint8_t *) malloc(Artist::genome_length);
 
   /* Randomize the bits in the byte array */
-  for(size_t i = 0; i < (Artist::genome_length) ; i++)
+  for(size_t i = 0; i < (Artist::genome_length); i++)
   {
     chromosome.dominant[i] = rand_byte_generator(); 
     chromosome.recessive[i] = rand_byte_generator(); 
+  }
+
+  /* Set only the first triangle to visible */
+  Triangle * dom_tri = (Triangle *)(chromosome.dominant + TRIANGLE_LIST_BEGIN);
+  Triangle * rec_tri = (Triangle *)(chromosome.recessive + TRIANGLE_LIST_BEGIN);
+  for(size_t i = 0; i < Artist::number_of_triangles; i++)
+  {
+    dom_tri[i].visible = 0;
+    rec_tri[i].visible = 0;
+
+    /* Set the first triangle's visiblity to 00000111 */
+    if(i == 0) { dom_tri[i].visible = 7; }
   }
 
   /* Set the fitness as high as possible to ensure it's replaced. */
@@ -313,30 +271,26 @@ Artist::~Artist()
 /* Expresses the genotype, compares it to the submitted image and scores
  * it based on similarity. Sets and returns the fitness.
  */
-void Artist::score(const Magick::Image & source)
+void Artist::score()
 {
-  /* Extract the source dimensions. */
-  size_t width  = source.columns();
-  size_t height = source.rows();
-
   /* Express the phenotype */
-  Magick::Image canvas = drawTriangles(chromosome, width, height);
+  Magick::Image * canvas = draw();
   
   /* Compare the average pixel error to the original */
-  double rmse = canvas.compare(source, Magick::RootMeanSquaredErrorMetric);
+  double rmse = canvas->compare(Artist::source_copy, Magick::RootMeanSquaredErrorMetric);
 
   /* Resize the image, take its hash and compare to the source */
   size_t hash_width  = (IMG_HASH_SQRT + 1);
   size_t hash_height = IMG_HASH_SQRT;
 
   std::string dimensions = "!" + std::to_string(hash_width) + "x!" + std::to_string(hash_height);
-  canvas.resize(dimensions);
+  canvas->resize(dimensions);
 
   /* Calculate the image hash */
   size_t hash_length = IMG_HASH_SQRT * IMG_HASH_SQRT;
   bool image_hash[hash_length];
 
-  calculateImageHash(canvas, image_hash);
+  calculateImageHash(*canvas, image_hash);
 
   /* Calculate the Hamming Distance */
   size_t h_dist = calculateHammingDistance(Artist::source_img_hash, image_hash, hash_length);
@@ -346,69 +300,71 @@ void Artist::score(const Magick::Image & source)
   int penalty = std::abs((int)half - (int)h_dist);
   double form_fitness = 1.0 - ((double)penalty / half);
 
+  /* Free the memory */
+  delete canvas;
+
   /* Combined fitness */
   fitness = rmse + form_fitness;
 }
 
-/* Draw and return the image */
-Magick::Image Artist::draw(size_t width, size_t height)
+/* Draw and return the image. Creates a NEW image that the caller is 
+   responsible for freeing.
+ */
+Magick::Image * Artist::draw()
 {
-  /* Extract the source dimensions */
-  std::string source_width(std::to_string(width));
-  std::string source_height(std::to_string(height));
-  std::string image_dimensions = source_width + "x" + source_height;
+    /* Extract source iamge dimensions */
+    size_t width = Artist::source_copy.columns();
+    size_t height = Artist::source_copy.rows();
 
-  /* Extract the RGBA background color from the dominant genome */
-  uint8_t * rgba = chromosome.dominant + BG_COLOR_OFFSET;
+    /* Extract background color */
+    uint8_t * rgba = chromosome.dominant + BG_COLOR_OFFSET;
+    Magick::Color bg_color(rgba[0], rgba[1], rgba[2], rgba[3]);
 
-  /* Create a new canvas, same size as the source with the encoded background 
-     color.
-   */
-  Magick::Color bg_color(rgba[0], rgba[1], rgba[2], rgba[3]);
-  Magick::Image canvas(image_dimensions, bg_color);
+    /* Create a canvas to draw upon. */
+    std::string image_dimensions = std::to_string(width) + "x" + std::to_string(height);
+    Magick::Image * canvas = new Magick::Image(image_dimensions, bg_color);
 
-  /* Set some drawing defaults on the image */
-  canvas.strokeWidth(0.0);
-  canvas.strokeAntiAlias(true);
+    /* Set some drawing defaults on the image */
+    canvas->strokeWidth(0.0);
+    canvas->strokeAntiAlias(true);
 
-  /* Create a list of triangles to draw to the canvas */
-  Triangle * dominant = (Triangle *)(chromosome.dominant + TRIANGLE_LIST_BEGIN);
-  Triangle * recessive = (Triangle *)(chromosome.recessive + TRIANGLE_LIST_BEGIN);
-  std::vector<Magick::Drawable> triangle_list;
+    /* Create a list of triangles to draw to the canvas. */
+    Triangle * dominant = (Triangle *)(chromosome.dominant + TRIANGLE_LIST_BEGIN);
+    Triangle * recessive = (Triangle *)(chromosome.recessive + TRIANGLE_LIST_BEGIN);
+    std::vector<Magick::Drawable> triangle_list;
 
-  for(size_t i = 0; i < GENOME_LENGTH; i++)
-  {
-    Triangle tri_dom = dominant[i];
-    Triangle tri_rec = recessive[i];
-    
-    /* Draw the triangle with the higher visible parameter */
-    Triangle tri = (tri_dom.visible >= tri_rec.visible) ? tri_dom : tri_rec;
-    
-    /* If both triangles were visibilty 0; draw neither */
-    if(tri.visible == 0) { continue; }
+    for(size_t i = 0; i < GENOME_LENGTH; i++)
+    {
+      Triangle const & tri_dom = dominant[i];
+      Triangle const & tri_rec = recessive[i];
+      
+      Triangle tri = (tri_dom.visible >= tri_rec.visible) ? tri_dom : tri_rec;
+      
+      /* If both triangles were visibilty 0; draw neither */
+      if(tri.visible == 0) { continue; }
+      
+      /* Translate the coordinates */
+      Magick::CoordinateList coordinates;
+      coordinates.push_back(Magick::Coordinate(UITD(tri.x1, width), UITD(tri.y1, height)));
+      coordinates.push_back(Magick::Coordinate(UITD(tri.x2, width), UITD(tri.y2, height)));
+      coordinates.push_back(Magick::Coordinate(UITD(tri.x3, width), UITD(tri.y3, height)));
+      Magick::DrawablePolyline drawable_triangle(coordinates);
 
-    /* Transform the triangle into a DrawablePolygons */      
-    /* Translate the coordinates */
-    Magick::CoordinateList coordinates;
-    coordinates.push_back(Magick::Coordinate(UITD(tri.x1, width), UITD(tri.y1, height)));
-    coordinates.push_back(Magick::Coordinate(UITD(tri.x2, width), UITD(tri.y2, height)));
-    coordinates.push_back(Magick::Coordinate(UITD(tri.x3, width), UITD(tri.y3, height)));
-    Magick::DrawablePolyline drawable_triangle(coordinates);
+      /* Set the fill/stroke color */
+      Magick::Color color(tri.r, tri.g, tri.b, tri.a);
+      canvas->strokeColor(color);
+      canvas->fillColor(color);
 
-    /* Set the fill/stroke color */
-    Magick::Color color(tri.r, tri.g, tri.b, tri.a);
-    canvas.strokeColor(color);
-    canvas.fillColor(color);
+      /* Push the colors and then the shape onto the drawable lsit */
+      triangle_list.push_back(Magick::DrawableFillColor(color));
+      triangle_list.push_back(Magick::DrawableStrokeColor(color));
+      triangle_list.push_back(drawable_triangle);
+    }
 
-    /* Push the colors and then the shape onto the drawable lsit */
-    triangle_list.push_back(Magick::DrawableFillColor(color));
-    triangle_list.push_back(Magick::DrawableStrokeColor(color));
-    triangle_list.push_back(drawable_triangle);
-  }
+    /* Draw the triangles! */
+    canvas->draw(triangle_list);
 
-  /* Draw the triangles! */
-  canvas.draw(triangle_list);
-  return canvas;
+    return canvas;
 }
 
 /* Returns the fitness of the Artist #getters */

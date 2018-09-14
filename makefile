@@ -8,7 +8,7 @@ IMAGE_MAGICK = `Magick++-config --cxxflags --cppflags --ldflags --libs`
 triangles: main.o $(OBJS)
 	$(CC) main.o $(OBJS) $(IMAGE_MAGICK) -O3 -o $(NAME)
 
-main.o: main.h main.cpp
+main.o: main.h main.cpp cli.h image.h artist.h triangle.h location.h
 	$(CC) $(CCFLAGS) $(IMAGE_MAGICK) main.cpp
 
 test: test.o $(OBJS)
@@ -26,10 +26,10 @@ image.o: image.h image.cpp
 triangle.o: triangle.h triangle.cpp
 	$(CC) $(CCFLAGS) triangle.cpp
 
-artist.o: artist.h artist.cpp
+artist.o: artist.h artist.cpp cli.h image.h triangle.h
 	$(CC) $(CCFLAGS) $(IMAGE_MAGICK) artist.cpp
 
-location.o: location.h location.cpp
+location.o: location.h location.cpp cli.h
 	$(CC) $(CCFLAGS) $(IMAGE_MAGICK) location.cpp
 
 # Utility

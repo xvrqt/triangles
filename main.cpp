@@ -77,7 +77,7 @@ int main(int argc, char ** argv)
 			threads.push_back(std::thread([](Artist * a, Magick::Image source_image) {
 				a->crossover();
 				a->mutate();
-				a->score(source_image);
+				a->score();
 			}, (*a), source));
 		}
 		for (auto& th : threads) { th.join(); }
@@ -166,9 +166,10 @@ int main(int argc, char ** argv)
 		if((number_of_generations_run % 25) == 0)
 		{
 			std::cout << artists[0]->getFitness() << std::endl;
-			Magick::Image best_image = artists[0]->draw(source.columns(), source.rows());
+			Magick::Image * best_image = artists[0]->draw();
 			std::string num_gens = std::to_string(number_of_generations_run);
-			best_image.write("output/" + num_gens + ".png");
+			best_image->write("output/" + num_gens + ".png");
+			delete best_image;
 		}
 
 		/* Delete old artists and copy the next_generation into the artists vector. */

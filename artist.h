@@ -100,7 +100,7 @@ class Artist
        */
       Artist(const Artist &a, const Artist &b);
 
-      /* Allows us to sort without copying. Sorts via fitness. */
+      /* Rule of 3 */
       bool operator <(const Artist &a) const;
       Artist(Artist const &that);
       void operator=(Artist const &that);
@@ -111,7 +111,7 @@ class Artist
       /* Expresses the genotype, compares it to the submitted image and scores
        * it based on similarity.
        */
-      void score(const Magick::Image & source);
+      void score();
 
       /* Returns the fitness of the Artist #getters */
       double getFitness() const;
@@ -134,8 +134,8 @@ class Artist
       /* Chance to flip some of the bits */
       void mutate();
 
-      /* Draw and output the image */
-      Magick::Image draw(size_t width, size_t height);
+      /* Draw and output the image. Caller responsible for freeing. */
+      Magick::Image * draw();
 
       /* Sets the proportion the artists should reproduce */
       void setReproductionProportion(double avg_fitness, double std_dev); 

@@ -4,10 +4,10 @@
 #include <cstdlib>
 
 /*
-[xxxxxxxxxx][yyyyyyyyyy][xxxxxxxxxx][yyyyyyyyyy][xxxxxxxxxx][yyyyyyyyyy]|[vvvv]|[rrrrrrrr][gggggggg][bbbbbbbb]|[aaaaaaaa]
-[                                points                                ]|[show]|[           colors           ]|[opacity ]
+[xxxxxxxxxx][yyyyyyyyyy][xxxxxxxxxx][yyyyyyyyyy][xxxxxxxxxx][yyyyyyyyyy]|[rrrrrrrr][gggggggg][bbbbbbbb]|[aaaaaaaa]|[vvvvvvvv]
+[                                points                                ]|[           colors           ]|[opacity ]|[visible ]
 
-Total size: 12 bytes (3 bits unsued at the end)
+Total size: 11 bytes.
 Packed to preserve alignment.
 */
 
