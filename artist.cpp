@@ -190,8 +190,8 @@ void Artist::score(const Magick::Image & source)
     /* If both triangles were visibilty 0; draw neither */
     if(tri.visible == 0) { continue; }
 
-    /* Create masks so that it only draws (roughly) within the image's 
-       boundaries.
+    /* Turn the uint8_t / 255 into a percentage [0,1) and multiply it by the
+       source image dimensions. 
      */
     size_t width = source.columns();
     size_t height = source.rows();
@@ -199,9 +199,9 @@ void Artist::score(const Magick::Image & source)
     /* Transform the triangle into a DrawablePolygons */      
     /* Translate the coordinates */
     Magick::CoordinateList coordinates;
-    coordinates.push_back(Magick::Coordinate(tri.x1 & mask_w,tri.y1 & mask_h));
-    coordinates.push_back(Magick::Coordinate(tri.x2 & mask_w,tri.y2 & mask_h));
-    coordinates.push_back(Magick::Coordinate(tri.x3 & mask_w,tri.y3 & mask_h));
+    coordinates.push_back(Magick::Coordinate(UITD(tri.x1, width), UITD(tri.y1, height)));
+    coordinates.push_back(Magick::Coordinate(UITD(tri.x2, width), UITD(tri.y2, height)));
+    coordinates.push_back(Magick::Coordinate(UITD(tri.x3, width), UITD(tri.y3, height)));
     Magick::DrawablePolyline drawable_triangle(coordinates);
 
     /* Set the fill/stroke color */
@@ -260,13 +260,13 @@ Magick::Image Artist::draw(size_t width, size_t height)
     
     /* If both triangles were visibilty 0; draw neither */
     if(tri.visible == 0) { continue; }
-    
+
     /* Transform the triangle into a DrawablePolygons */      
     /* Translate the coordinates */
     Magick::CoordinateList coordinates;
-    coordinates.push_back(Magick::Coordinate(tri.x1,tri.y1));
-    coordinates.push_back(Magick::Coordinate(tri.x2,tri.y2));
-    coordinates.push_back(Magick::Coordinate(tri.x3,tri.y3));
+    coordinates.push_back(Magick::Coordinate(UITD(tri.x1, width), UITD(tri.y1, height)));
+    coordinates.push_back(Magick::Coordinate(UITD(tri.x2, width), UITD(tri.y2, height)));
+    coordinates.push_back(Magick::Coordinate(UITD(tri.x3, width), UITD(tri.y3, height)));
     Magick::DrawablePolyline drawable_triangle(coordinates);
 
     /* Set the fill/stroke color */

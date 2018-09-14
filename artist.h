@@ -20,6 +20,9 @@
 /* Helpful for the bit twiddling */
 #define GETMASK(index, size) (((1 << (size)) - 1) << (index))
 
+/* Takes a uint8_t and turns it into a double [0,1) */
+#define UITD(num, dimension) (((double)num / 255) * dimension)
+
 /* Semantic struct to represent the diploid nature of the genes */
 struct Chromosome {
   uint8_t * dominant;
