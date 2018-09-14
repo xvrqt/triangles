@@ -28,9 +28,6 @@ struct Chromosome {
   uint8_t * dominant;
   uint8_t * recessive;
 
-  /* Length in bytes */
-  size_t length;
-
   /* Crossover point */
   size_t crossover_point = 0;
 };
@@ -50,7 +47,7 @@ class Artist
   /* The genetic information */
   Chromosome chromosome;
 
-  /* Fitnesss of the Artist */
+  /* Fitnesss of the Artist - lower is better */
   double fitness;
 
   /* The expected amount of times an Artist will reproduce */
@@ -59,24 +56,24 @@ class Artist
   /* Index into where the artist lives in the Artist Location Map */
   size_t location_index;
 
+  /* Static random engine */
+  static std::default_random_engine rand_engine;
+  static std::independent_bits_engine<std::default_random_engine, 8, unsigned char> rand_byte_generator;
+
   /* Max number of triangles in the chromosome */
   static size_t number_of_triangles;
 
   /* Length of the genome in bytes */
   static size_t genome_length;
 
-  /* Static random engine */
-  static std::default_random_engine rand_engine;
-  static std::independent_bits_engine<std::default_random_engine, 8, unsigned char> rand_byte_generator;
+  /* Chance, per bit, to be flipped per generation */
+  static double mutation_rate;
 
   /* Chance to cross over */
   static double crossover_chance;
 
   /* What boundaries are we allowed to crossover at */
   static Xover_type crossover_type;
-
-  /* Chance, per bit, to be flipped per generation */
-  static double mutation_rate;
 
   /* Keep count of the number of Artists. Used to set the location index. */
   static size_t count;
@@ -93,14 +90,14 @@ class Artist
          for freeing the returned baby.
        */
       Artist(const Artist &a, const Artist &b);
-      
-      /* Clean up the very obvious sources of memory leaks (chromosome) */
-      ~Artist();
 
       /* Allows us to sort without copying. Sorts via fitness. */
       bool operator <(const Artist &a) const;
       Artist(Artist const &that);
       void operator=(Artist const &that);
+      
+      /* Clean up the very obvious sources of memory leaks (chromosome) */
+      ~Artist();
 
       /* Expresses the genotype, compares it to the submitted image and scores
        * it based on similarity.

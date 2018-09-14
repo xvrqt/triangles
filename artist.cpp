@@ -354,17 +354,40 @@ void Artist::crossover()
   double rand_zero_to_one = (double)(rand()/RAND_MAX);
   if(rand_zero_to_one < Artist::crossover_chance)
   {
-      /* Pick a bit to crossover at */
-      size_t genome_bit_length = Artist::genome_length * 8;
-      double div = (RAND_MAX/(genome_bit_length - 1));
-      size_t bit_index = (size_t)(std::floor(((double)rand()/div)));
-
-      /* Determine the byte index and swap the bytes in the range: 
-         [(byte_index + 1), genome_length].
+      /* Where in the genome to crossover at */
+      size_t bit_index = 0;
+      size_t byte_index = 0;
+      
+      /* Choose a random byte to begin crossover in the genome. If XOVER_TYPE 
+         is set to TRIANGLE - make sure that byte is aligned to the start of a
+         Triangle struct.
        */
-      size_t byte_index = bit_index / 8;
-      /* There are no bytes to copy when crossover happens in the last byte */
-      if(byte_index < (Artist::genome_length - 1))
+      if(Artist::crossover_type == Xover_type::TRIANGLE)
+      {
+        /* Generate a random, Triangle aligned, byte index */
+        double div = (RAND_MAX/(Artist::number_of_triangles));
+        size_t tri_index = (size_t)(std::floor((((double)rand() - 1)/div)));
+        byte_index = TRIANGLE_LIST_BEGIN + (tri_index * sizeof(Triangle));
+      }
+      else
+      {
+        /* Generate a random byte index */
+        double div = (RAND_MAX/(Artist::genome_length));
+        byte_index = (size_t)(std::floor((((double)rand() - 1)/div)));
+      }
+
+      /* If applicable - choose a bit to crossover at */ 
+      if(Artist::crossover_type == Xover_type::BIT)
+      {
+        /* Pick a bit to crossover at */
+        double div = (RAND_MAX/(8 - 1));
+        bit_index = (size_t)(std::floor((((double)rand() - 1)/div))); 
+      }
+
+      /* Swap the bytes in the range: [(byte_index + 1), genome_length].      
+         There are no bytes to copy when crossover happens in the last byte.
+       */
+      if(byte_index <= (Artist::genome_length - 1))
       {
         /* Number of bytes to swap */
         size_t swap_size = Artist::genome_length - byte_index - 1;
@@ -377,24 +400,28 @@ void Artist::crossover()
         free(byte_swap_space);
       }
 
-      /* For the byte that is split, swap the bits */
-      uint8_t dom_byte = chromosome.dominant[byte_index];
-      uint8_t rec_byte = chromosome.recessive[byte_index];
-      uint8_t intra_byte_index = bit_index % 8;
-      uint8_t num_bits = 8 - intra_byte_index;
+      /* Swap the bits */
+      if(Artist::crossover_type == Xover_type::BIT)
+      {
+        /* For the byte that is split, swap the bits */
+        uint8_t dom_byte = chromosome.dominant[byte_index];
+        uint8_t rec_byte = chromosome.recessive[byte_index];
+        uint8_t intra_byte_index = bit_index % 8;
+        uint8_t num_bits = 8 - intra_byte_index;
 
-      /* Prepare the bytes for writing to */
-      uint8_t mask1 = (uint8_t)GETMASK(intra_byte_index, num_bits);
-      chromosome.dominant[byte_index] |= mask1;
-      chromosome.recessive[byte_index] |= mask1;
+        /* Prepare the bytes for writing to */
+        uint8_t mask1 = (uint8_t)GETMASK(intra_byte_index, num_bits);
+        chromosome.dominant[byte_index] |= mask1;
+        chromosome.recessive[byte_index] |= mask1;
 
-      /* Prepare the bits to be written */
-      uint8_t dom_bits = (dom_byte & mask1) | (~mask1);
-      uint8_t rec_bits = (rec_byte & mask1) | (~mask1);
+        /* Prepare the bits to be written */
+        uint8_t dom_bits = (dom_byte & mask1) | (~mask1);
+        uint8_t rec_bits = (rec_byte & mask1) | (~mask1);
 
-      /* Write the bits to the byte */
-      chromosome.dominant[byte_index] &= rec_bits;
-      chromosome.recessive[byte_index] &= dom_bits;
+        /* Write the bits to the byte */
+        chromosome.dominant[byte_index] &= rec_bits;
+        chromosome.recessive[byte_index] &= dom_bits;
+      }
   }
 }
 

@@ -150,7 +150,6 @@ void parseArgs(int argc, char ** argv)
                     printf("Crossover type must be one of bit, byte, triangle.\nType provided: %s\n", optarg);
                     exit(1);
                 }
-                printf("%d", XOVER_TYPE);
                 break;
             }
             case 'm': {
