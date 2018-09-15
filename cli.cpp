@@ -6,6 +6,11 @@ char * IMAGE_PATH = 0;
 /* Maximum number of triangles to attempt to draw the image with. */
 size_t GENOME_LENGTH = 10;
 
+/* "One At A Time Mode" - Number of generations before another triangle is
+   allowed to be expressed.
+ */
+size_t OAAT_MODE = 0;
+
 /* Number of artists in each generation */
 size_t POPULATION_SIZE = 25;
 
@@ -38,6 +43,7 @@ void parseArgs(int argc, char ** argv)
         {
             {"image",               required_argument, 0, 'i'},
             {"genome-length",       required_argument, 0, 'g'},
+            {"oaat-mode",           required_argument, 0, 'o'},
             {"population-size",     required_argument, 0, 'p'},
             {"generations",         required_argument, 0, 'n'},
             {"elitism",             required_argument, 0, 'e'},
@@ -52,7 +58,7 @@ void parseArgs(int argc, char ** argv)
         int option_index = 0;
 
         /* Short codes for characters */
-        const char * short_options = "i:g:e:p:n:r:x:t:m:";
+        const char * short_options = "i:g:o:e:p:n:r:x:t:m:";
 
         c = getopt_long(argc, argv, short_options, long_options, &option_index);
 
@@ -78,12 +84,25 @@ void parseArgs(int argc, char ** argv)
                 int g = atoi(optarg);
                 if(g < 0)
                 {
-                    printf("The genome length  must be greater than 0.\n");
+                    printf("The genome length must be greater than 0.\n");
                     exit(1);
                 }
                 else
                 {
                     GENOME_LENGTH = g;
+                }                
+                break;
+            }
+            case 'o': {
+                int o = atoi(optarg);
+                if(o < 0)
+                {
+                    printf("Number of generations without improvement should be greater than 0.\n");
+                    exit(1);
+                }
+                else
+                {
+                    OAAT_MODE = (size_t)o;
                 }                
                 break;
             }

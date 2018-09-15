@@ -21,14 +21,13 @@ extern size_t GENOME_LENGTH;
    where N is <= GENOME_LENGTH. Setting N will allow the Artists to draw the
    image one Triangle at a time. Hence the name.
 
-   If OOAT_MODE is 0 - it is considered to be off. Otherwise, when G generations
-   have passed with no improvement in fitness, another triangle will be expressed
-   until N = GENOME_LENGTH.
+   If the program fails to make progress for OAAT_MODE number of generations
+   N increases by 1.
 
    Highly recommended to pair this with Elitism with cloning so fitness
    monotonically decreases.
  */
-extern double OAAT_MODE;
+extern size_t OAAT_MODE;
 
 /* Number of artists in each generation. Defaults to 25 */
 extern size_t POPULATION_SIZE;

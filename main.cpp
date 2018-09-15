@@ -16,6 +16,8 @@ int main(int argc, char ** argv)
 
 	/* Open the source Image */
 	Magick::Image source = openImage(IMAGE_PATH);
+
+	/* Precompute the image hash to save time in the future */
 	Artist::initializeSourceImage(source);
 
 	/* Initialize the srand for crossover/mutation decisions */
