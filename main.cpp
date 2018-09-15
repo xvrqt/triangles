@@ -11,6 +11,13 @@ int main(int argc, char ** argv)
 	/* Initialize Artist settings with runtime parameters. */
 	Artist::initialization(RANDOM_SEED, GENOME_LENGTH, MUTATION_RATE, XOVER_CHANCE, XOVER_TYPE);
 
+	/* If One At A Time Mode is set, don't allow artists to express any 
+	   triangles until they've earned it.
+	 */
+	if(OAAT_MODE) {
+	  Artist::setMaxExpression(0);
+	}
+
 	/* Precompute locations and distances between them */
 	auto location_likelihood_map = getLocationLikelihoodMap(POPULATION_SIZE);
 
@@ -32,8 +39,8 @@ int main(int argc, char ** argv)
 	}
 
 	/* Main loops - runs for # of GENERATIONS */
-	size_t number_of_generations_run = 0;  /* Keep track of which generation we're on */
 	bool run_forever = (GENERATIONS == 0); /* If # of generations is 0 -> run forever */
+	size_t number_of_generations_run = 0;  /* Keep track of which generation we're on */
 	for(;number_of_generations_run < GENERATIONS || run_forever; number_of_generations_run++)
 	{
 		/* Add the artists to a location indexed vector so that it's easy to 

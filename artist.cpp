@@ -107,6 +107,7 @@ void Artist::initializeGenomeLength(size_t GENOME_LENGTH)
      triangles. This is because the user won't know how many bytes to specify.
    */
   Artist::number_of_triangles = GENOME_LENGTH;
+  Artist::expression_limit = GENOME_LENGTH;
 
   /* Calculate the byte length */
   size_t size_of_bg_rbg = (4 * sizeof(uint8_t));
@@ -456,7 +457,7 @@ Magick::Image * Artist::draw()
     for(size_t i = 0; i < GENOME_LENGTH; i++)
     {
       /* If we're in OAAT mode - limit expression */
-      // if(i >= Artist::expression_limit) { break; }
+      if(i >= Artist::expression_limit) { break; }
 
       Triangle const & tri_dom = dominant[i];
       Triangle const & tri_rec = recessive[i];

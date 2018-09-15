@@ -90,8 +90,6 @@ class Artist
   /* Keep count of the number of Artists. Used to set the location index. */
   static size_t count;
 
-  /* Generates the artist's location */
-
     public:
       /* Generates an artist with a random genotype, with only the first
         triangle set as visible.
