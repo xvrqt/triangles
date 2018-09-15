@@ -74,11 +74,14 @@ int main(int argc, char ** argv)
 		std::vector<std::thread> threads;
 		for(auto a = artists.begin(); a != artists.end(); ++a)
 		{
-			threads.push_back(std::thread([](Artist * a, Magick::Image source_image) {
-				a->crossover();
-				a->mutate();
-				a->score();
-			}, (*a), source));
+			if((*a)->getFitness() == std::numeric_limits<double>::max())
+			{
+				threads.push_back(std::thread([](Artist * a, Magick::Image source_image) {
+					a->crossover();
+					a->mutate();
+					a->score();
+				}, (*a), source));
+			}
 		}
 		for (auto& th : threads) { th.join(); }
 
@@ -134,11 +137,11 @@ int main(int argc, char ** argv)
 		 */
 		std::vector<Artist *> next_generation;
 		next_generation.reserve(POPULATION_SIZE);
-		size_t counter = 0; /* Stop if count > POPULATION_SIZE (only relevant when elitism is set) */
+		size_t num_of_elite = 0;
 		for(auto a = artists_proportional.begin(); a != artists_proportional.end(); ++a)
 		{
-			if(counter >= POPULATION_SIZE) { break; }
-			if(counter < ELITISM)
+			if(next_generation.size() >= POPULATION_SIZE) { break; }
+			if(num_of_elite++ < ELITISM)
 			{
 				next_generation.push_back(new Artist(**a));
 			}

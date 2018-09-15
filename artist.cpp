@@ -63,14 +63,15 @@ std::default_random_engine Artist::rand_engine;
 std::independent_bits_engine<std::default_random_engine, 8, unsigned char> Artist::rand_byte_generator;
 
 /* Default Artist values */
-size_t      Artist::number_of_triangles = 10;
-size_t      Artist::genome_length = (Artist::number_of_triangles * sizeof(Triangle) + 4 * sizeof(uint8_t));
-size_t      Artist::count = 0;
+size_t Artist::number_of_triangles = 10;
+size_t Artist::genome_length = (Artist::number_of_triangles * sizeof(Triangle) + 4 * sizeof(uint8_t));
+size_t Artist::expression_limit = Artist::number_of_triangles;
+size_t Artist::count = 0;
 
-double      Artist::mutation_rate = 0.005;
-double      Artist::crossover_chance = 0.7;
+double Artist::mutation_rate = 0.005;
+double Artist::crossover_chance = 0.7;
 
-Xover_type  Artist::crossover_type = Xover_type::BIT;
+Xover_type Artist::crossover_type = Xover_type::BIT;
 
 Magick::Image Artist::source_copy;
 bool Artist::source_img_hash[IMG_HASH_SQRT * IMG_HASH_SQRT];
@@ -99,6 +100,21 @@ void Artist::initializeRandomByteGenerator(size_t RANDOM_SEED)
   Artist::rand_byte_generator = dummy;
 }
 
+/* Set the max number of triangles that may be expressed */
+// void Artist::initializeExpressionLimit(size_t EXPRE);
+
+/* Set the mutation rate */
+void Artist::initializeMutationRate(double MUTATION_RATE)
+{
+  if(MUTATION_RATE >= 0 && MUTATION_RATE <= 1) { Artist::mutation_rate = MUTATION_RATE; }
+  else 
+  { 
+    std::cerr << "Mutation rate must be between 0.0 and 1.0.\nRate \
+                  provided: " << MUTATION_RATE << std::endl;
+    exit(1);
+  }
+}
+
 /* Set the max number of triangles, and genome byte length */
 void Artist::initializeGenomeLength(size_t GENOME_LENGTH)
 {
@@ -111,18 +127,6 @@ void Artist::initializeGenomeLength(size_t GENOME_LENGTH)
   size_t size_of_bg_rbg = (4 * sizeof(uint8_t));
   size_t size_of_triangles = (Artist::number_of_triangles * sizeof(Triangle));
   Artist::genome_length = size_of_bg_rbg + size_of_triangles;
-}
-
-/* Set the mutation rate */
-void Artist::initializeMutationRate(double MUTATION_RATE)
-{
-  if(MUTATION_RATE >= 0 && MUTATION_RATE <= 1) { Artist::mutation_rate = MUTATION_RATE; }
-  else 
-  { 
-    std::cerr << "Mutation rate must be between 0.0 and 1.0.\nRate \
-                  provided: " << MUTATION_RATE << std::endl;
-    exit(1);
-  }
 }
 
 /* Set the crossover chance */
@@ -265,137 +269,18 @@ Artist::~Artist()
 }
 
 /* * * * * * * * * * * * * * * * * * *
- *         Member Functions          *
+ *         Other Operators           *
  * * * * * * * * * * * * * * * * * * */
 
-/* Expresses the genotype, compares it to the submitted image and scores
- * it based on similarity. Sets and returns the fitness.
- */
-void Artist::score()
+/* Allows us to sort without copying */
+bool Artist::operator <(const Artist &a) const
 {
-  /* Express the phenotype */
-  Magick::Image * canvas = draw();
-  
-  /* Compare the average pixel error to the original */
-  double rmse = canvas->compare(Artist::source_copy, Magick::RootMeanSquaredErrorMetric);
-
-  /* Resize the image, take its hash and compare to the source */
-  size_t hash_width  = (IMG_HASH_SQRT + 1);
-  size_t hash_height = IMG_HASH_SQRT;
-
-  std::string dimensions = "!" + std::to_string(hash_width) + "x!" + std::to_string(hash_height);
-  canvas->resize(dimensions);
-
-  /* Calculate the image hash */
-  size_t hash_length = IMG_HASH_SQRT * IMG_HASH_SQRT;
-  bool image_hash[hash_length];
-
-  calculateImageHash(*canvas, image_hash);
-
-  /* Calculate the Hamming Distance */
-  size_t h_dist = calculateHammingDistance(Artist::source_img_hash, image_hash, hash_length);
-
-  /* Normalize */
-  size_t half = (hash_length) / 2;
-  int penalty = std::abs((int)half - (int)h_dist);
-  double form_fitness = 1.0 - ((double)penalty / half);
-
-  /* Free the memory */
-  delete canvas;
-
-  /* Combined fitness */
-  fitness = rmse + form_fitness;
+  return fitness < a.fitness;
 }
 
-/* Draw and return the image. Creates a NEW image that the caller is 
-   responsible for freeing.
- */
-Magick::Image * Artist::draw()
-{
-    /* Extract source iamge dimensions */
-    size_t width = Artist::source_copy.columns();
-    size_t height = Artist::source_copy.rows();
-
-    /* Extract background color */
-    uint8_t * rgba = chromosome.dominant + BG_COLOR_OFFSET;
-    Magick::Color bg_color(rgba[0], rgba[1], rgba[2], rgba[3]);
-
-    /* Create a canvas to draw upon. */
-    std::string image_dimensions = std::to_string(width) + "x" + std::to_string(height);
-    Magick::Image * canvas = new Magick::Image(image_dimensions, bg_color);
-
-    /* Set some drawing defaults on the image */
-    canvas->strokeWidth(0.0);
-    canvas->strokeAntiAlias(true);
-
-    /* Create a list of triangles to draw to the canvas. */
-    Triangle * dominant = (Triangle *)(chromosome.dominant + TRIANGLE_LIST_BEGIN);
-    Triangle * recessive = (Triangle *)(chromosome.recessive + TRIANGLE_LIST_BEGIN);
-    std::vector<Magick::Drawable> triangle_list;
-
-    for(size_t i = 0; i < GENOME_LENGTH; i++)
-    {
-      Triangle const & tri_dom = dominant[i];
-      Triangle const & tri_rec = recessive[i];
-      
-      Triangle tri = (tri_dom.visible >= tri_rec.visible) ? tri_dom : tri_rec;
-      
-      /* If both triangles were visibilty 0; draw neither */
-      if(tri.visible == 0) { continue; }
-      
-      /* Translate the coordinates */
-      Magick::CoordinateList coordinates;
-      coordinates.push_back(Magick::Coordinate(UITD(tri.x1, width), UITD(tri.y1, height)));
-      coordinates.push_back(Magick::Coordinate(UITD(tri.x2, width), UITD(tri.y2, height)));
-      coordinates.push_back(Magick::Coordinate(UITD(tri.x3, width), UITD(tri.y3, height)));
-      Magick::DrawablePolyline drawable_triangle(coordinates);
-
-      /* Set the fill/stroke color */
-      Magick::Color color(tri.r, tri.g, tri.b, tri.a);
-      canvas->strokeColor(color);
-      canvas->fillColor(color);
-
-      /* Push the colors and then the shape onto the drawable lsit */
-      triangle_list.push_back(Magick::DrawableFillColor(color));
-      triangle_list.push_back(Magick::DrawableStrokeColor(color));
-      triangle_list.push_back(drawable_triangle);
-    }
-
-    /* Draw the triangles! */
-    canvas->draw(triangle_list);
-
-    return canvas;
-}
-
-/* Returns the fitness of the Artist #getters */
-double Artist::getFitness() const
-{
-  return fitness;
-}
-
-/* Returns the expected_reproduction of the Artist. #getters */
-double Artist::getExpectedReproduction() const
-{
-  return expected_reproduction;
-}
-
-/* Returns the location index of the Artist. #getters */
-size_t Artist::getLocationIndex() const
-{
-  return location_index;
-}
-
-/* Set the location index - in case it already exists */
-void Artist::setLocationIndex(size_t index)
-{
-  if(index >= POPULATION_SIZE)
-  {
-    std::cerr << "Tried setting an out of bounds location index!\nIndex given: "
-    << index << "\nAllowed indices: [0," << (POPULATION_SIZE - 1) << "]" << std::endl;
-    exit(1);
-  }
-  else { location_index = index; }
-}
+/* * * * * * * * * * * * * * * * * * *
+ *         Member Functions          *
+ * * * * * * * * * * * * * * * * * * */
 
 /* Take a random double between [0,1] - if lower than or equal to 
   crossover_chance, swap part of the dominant and recessive genomes. The index
@@ -506,6 +391,146 @@ void Artist::mutate()
   }
 }
 
+/* Expresses the genotype, compares it to the submitted image and scores
+ * it based on similarity. Sets and returns the fitness.
+ */
+void Artist::score()
+{
+  /* Express the phenotype */
+  Magick::Image * canvas = draw();
+  
+  /* Compare the average pixel error to the original */
+  double rmse = canvas->compare(Artist::source_copy, Magick::RootMeanSquaredErrorMetric);
+
+  /* Resize the image, take its hash and compare to the source */
+  size_t hash_width  = (IMG_HASH_SQRT + 1);
+  size_t hash_height = IMG_HASH_SQRT;
+
+  std::string dimensions = "!" + std::to_string(hash_width) + "x!" + std::to_string(hash_height);
+  canvas->resize(dimensions);
+
+  /* Calculate the image hash */
+  size_t hash_length = IMG_HASH_SQRT * IMG_HASH_SQRT;
+  bool image_hash[hash_length];
+
+  calculateImageHash(*canvas, image_hash);
+
+  /* Calculate the Hamming Distance */
+  size_t h_dist = calculateHammingDistance(Artist::source_img_hash, image_hash, hash_length);
+
+  /* Normalize */
+  size_t half = (hash_length) / 2;
+  int penalty = std::abs((int)half - (int)h_dist);
+  double form_fitness = 1.0 - ((double)penalty / half);
+
+  /* Free the memory */
+  delete canvas;
+
+  /* Combined fitness */
+  fitness = rmse + form_fitness;
+}
+
+/* Draw and return the image. Creates a NEW image that the caller is 
+   responsible for freeing.
+ */
+Magick::Image * Artist::draw()
+{
+    /* Extract source iamge dimensions */
+    size_t width = Artist::source_copy.columns();
+    size_t height = Artist::source_copy.rows();
+
+    /* Extract background color */
+    uint8_t * rgba = chromosome.dominant + BG_COLOR_OFFSET;
+    Magick::Color bg_color(rgba[0], rgba[1], rgba[2], rgba[3]);
+
+    /* Create a canvas to draw upon. */
+    std::string image_dimensions = std::to_string(width) + "x" + std::to_string(height);
+    Magick::Image * canvas = new Magick::Image(image_dimensions, bg_color);
+
+    /* Set some drawing defaults on the image */
+    canvas->strokeWidth(0.0);
+    canvas->strokeAntiAlias(true);
+
+    /* Create a list of triangles to draw to the canvas. */
+    Triangle * dominant = (Triangle *)(chromosome.dominant + TRIANGLE_LIST_BEGIN);
+    Triangle * recessive = (Triangle *)(chromosome.recessive + TRIANGLE_LIST_BEGIN);
+    std::vector<Magick::Drawable> triangle_list;
+
+    for(size_t i = 0; i < GENOME_LENGTH; i++)
+    {
+      /* If we're in OAAT mode - limit expression */
+      // if(i >= Artist::expression_limit) { break; }
+
+      Triangle const & tri_dom = dominant[i];
+      Triangle const & tri_rec = recessive[i];
+      
+      Triangle tri = (tri_dom.visible >= tri_rec.visible) ? tri_dom : tri_rec;
+      
+      /* If both triangles were visibilty 0; draw neither */
+      if(tri.visible == 0) { continue; }
+      
+      /* Translate the coordinates */
+      Magick::CoordinateList coordinates;
+      coordinates.push_back(Magick::Coordinate(UITD(tri.x1, width), UITD(tri.y1, height)));
+      coordinates.push_back(Magick::Coordinate(UITD(tri.x2, width), UITD(tri.y2, height)));
+      coordinates.push_back(Magick::Coordinate(UITD(tri.x3, width), UITD(tri.y3, height)));
+      Magick::DrawablePolyline drawable_triangle(coordinates);
+
+      /* Set the fill/stroke color */
+      Magick::Color color(tri.r, tri.g, tri.b, tri.a);
+      canvas->strokeColor(color);
+      canvas->fillColor(color);
+
+      /* Push the colors and then the shape onto the drawable lsit */
+      triangle_list.push_back(Magick::DrawableFillColor(color));
+      triangle_list.push_back(Magick::DrawableStrokeColor(color));
+      triangle_list.push_back(drawable_triangle);
+    }
+
+    /* Draw the triangles! */
+    canvas->draw(triangle_list);
+
+    return canvas;
+}
+
+/* * * * * * * * * * * * * * * * * * *
+ *              Getters              *
+ * * * * * * * * * * * * * * * * * * */
+
+/* Returns the fitness of the Artist #getters */
+double Artist::getFitness() const
+{
+  return fitness;
+}
+
+/* Returns the location index of the Artist. #getters */
+size_t Artist::getLocationIndex() const
+{
+  return location_index;
+}
+
+/* Returns the expected_reproduction of the Artist. #getters */
+double Artist::getExpectedReproduction() const
+{
+  return expected_reproduction;
+}
+
+/* * * * * * * * * * * * * * * * * * *
+ *              Setters              *
+ * * * * * * * * * * * * * * * * * * */
+
+/* Set the location index - in case it already exists */
+void Artist::setLocationIndex(size_t index)
+{
+  if(index >= POPULATION_SIZE)
+  {
+    std::cerr << "Tried setting an out of bounds location index!\nIndex given: "
+    << index << "\nAllowed indices: [0," << (POPULATION_SIZE - 1) << "]" << std::endl;
+    exit(1);
+  }
+  else { location_index = index; }
+}
+
 /* Sets the proportion the artists should reproduce */
 void Artist::setReproductionProportion(double avg_fitness, double std_dev)
 {
@@ -516,10 +541,4 @@ void Artist::setReproductionProportion(double avg_fitness, double std_dev)
     /* Everyone has a smöl chance to make it */
     if(expected_reproduction <= 0) { expected_reproduction = 0.1; }
   }
-}
-
-/* Allows us to sort without copying */
-bool Artist::operator <(const Artist &a) const
-{
-  return fitness < a.fitness;
 }

@@ -66,6 +66,9 @@ class Artist
   /* Max number of triangles in the chromosome */
   static size_t number_of_triangles;
 
+  /* Max number of expressed chromosomes */
+  static size_t expression_limit;
+
   /* Length of the genome in bytes */
   static size_t genome_length;
 
@@ -100,30 +103,17 @@ class Artist
        */
       Artist(const Artist &a, const Artist &b);
 
-      /* Rule of 3 */
-      bool operator <(const Artist &a) const;
+      /* Copy contructor */
       Artist(Artist const &that);
+
+      /* Assignment Constructor */
       void operator=(Artist const &that);
-      
+
       /* Clean up the very obvious sources of memory leaks (chromosome) */
       ~Artist();
 
-      /* Expresses the genotype, compares it to the submitted image and scores
-       * it based on similarity.
-       */
-      void score();
-
-      /* Returns the fitness of the Artist #getters */
-      double getFitness() const;
-
-      /* Returns the expected_reproduction of the Artist. # getters */
-      double getExpectedReproduction() const;
-
-      /* Returns the location index of the Artist */
-      size_t getLocationIndex() const;
-
-      /* Set the location index - in case it already exists */
-      void setLocationIndex(size_t index);
+      /* Coparison operator */
+      bool operator <(const Artist &a) const;
 
       /* Take a random double between [0,1] - if lower than or equal to 
         crossover_chance, swap part of the dominant and recessive genomes. The index
@@ -134,11 +124,28 @@ class Artist
       /* Chance to flip some of the bits */
       void mutate();
 
+      /* Expresses the genotype, compares it to the submitted image and scores
+       * it based on similarity.
+       */
+      void score();
+
       /* Draw and output the image. Caller responsible for freeing. */
-      Magick::Image * draw();
+      Magick::Image * draw(); 
+
+      /* Returns the fitness of the Artist #getters */
+      double getFitness() const;
+
+      /* Returns the location index of the Artist */
+      size_t getLocationIndex() const;
+
+      /* Returns the expected_reproduction of the Artist. # getters */
+      double getExpectedReproduction() const;
+
+      /* Set the location index - in case it already exists */
+      void setLocationIndex(size_t index);
 
       /* Sets the proportion the artists should reproduce */
-      void setReproductionProportion(double avg_fitness, double std_dev); 
+      void setReproductionProportion(double avg_fitness, double std_dev);
 
       /* Convenience funtion that calls the other initialization functions and ensures
          they are called in the correct order.

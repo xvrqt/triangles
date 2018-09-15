@@ -91,12 +91,12 @@ void parseArgs(int argc, char ** argv)
                 int e = atoi(optarg);
                 if(e < 0)
                 {
-                    printf("The genome length  must be greater than 0.\n");
+                    printf("The number of elites must be greater than or equal to 0.\n");
                     exit(1);
                 }
                 else
                 {
-                    ELITISM = e;
+                    ELITISM = (size_t)e;
                 }                
                 break;
             }
