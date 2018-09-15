@@ -147,6 +147,9 @@ class Artist
       /* Sets the proportion the artists should reproduce */
       void setReproductionProportion(double avg_fitness, double std_dev);
 
+      /* Sets the max number of triangles artists are allowed to express. */
+      static void setMaxExpression(size_t n);
+
       /* Convenience funtion that calls the other initialization functions and ensures
          they are called in the correct order.
        */

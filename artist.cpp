@@ -1,6 +1,28 @@
 #include "artist.h"
 
 /* * * * * * * * * * * * * * * * * * *
+ *    Static Member Initialization   *
+ * * * * * * * * * * * * * * * * * * */
+
+/* Random engine, independent bytes generator */
+std::default_random_engine Artist::rand_engine;
+std::independent_bits_engine<std::default_random_engine, 8, unsigned char> Artist::rand_byte_generator;
+
+/* Default Artist values */
+size_t Artist::number_of_triangles = 10;
+size_t Artist::genome_length = (Artist::number_of_triangles * sizeof(Triangle) + 4 * sizeof(uint8_t));
+size_t Artist::expression_limit = 0;
+size_t Artist::count = 0;
+
+double Artist::mutation_rate = 0.005;
+double Artist::crossover_chance = 0.7;
+
+Xover_type Artist::crossover_type = Xover_type::BIT;
+
+Magick::Image Artist::source_copy;
+bool Artist::source_img_hash[IMG_HASH_SQRT * IMG_HASH_SQRT];
+
+/* * * * * * * * * * * * * * * * * * *
  *          Helper Functions         *
  * * * * * * * * * * * * * * * * * * */
 
@@ -55,28 +77,6 @@ inline size_t calculateHammingDistance(bool * source_hash, bool * image_hash, si
 }
 
 /* * * * * * * * * * * * * * * * * * *
- *    Static Member Initialization   *
- * * * * * * * * * * * * * * * * * * */
-
-/* Random engine, independent bytes generator */
-std::default_random_engine Artist::rand_engine;
-std::independent_bits_engine<std::default_random_engine, 8, unsigned char> Artist::rand_byte_generator;
-
-/* Default Artist values */
-size_t Artist::number_of_triangles = 10;
-size_t Artist::genome_length = (Artist::number_of_triangles * sizeof(Triangle) + 4 * sizeof(uint8_t));
-size_t Artist::expression_limit = Artist::number_of_triangles;
-size_t Artist::count = 0;
-
-double Artist::mutation_rate = 0.005;
-double Artist::crossover_chance = 0.7;
-
-Xover_type Artist::crossover_type = Xover_type::BIT;
-
-Magick::Image Artist::source_copy;
-bool Artist::source_img_hash[IMG_HASH_SQRT * IMG_HASH_SQRT];
-
-/* * * * * * * * * * * * * * * * * * *
  *  Static Initialization Functions  *
  * * * * * * * * * * * * * * * * * * */
 
@@ -100,21 +100,6 @@ void Artist::initializeRandomByteGenerator(size_t RANDOM_SEED)
   Artist::rand_byte_generator = dummy;
 }
 
-/* Set the max number of triangles that may be expressed */
-// void Artist::initializeExpressionLimit(size_t EXPRE);
-
-/* Set the mutation rate */
-void Artist::initializeMutationRate(double MUTATION_RATE)
-{
-  if(MUTATION_RATE >= 0 && MUTATION_RATE <= 1) { Artist::mutation_rate = MUTATION_RATE; }
-  else 
-  { 
-    std::cerr << "Mutation rate must be between 0.0 and 1.0.\nRate \
-                  provided: " << MUTATION_RATE << std::endl;
-    exit(1);
-  }
-}
-
 /* Set the max number of triangles, and genome byte length */
 void Artist::initializeGenomeLength(size_t GENOME_LENGTH)
 {
@@ -127,6 +112,18 @@ void Artist::initializeGenomeLength(size_t GENOME_LENGTH)
   size_t size_of_bg_rbg = (4 * sizeof(uint8_t));
   size_t size_of_triangles = (Artist::number_of_triangles * sizeof(Triangle));
   Artist::genome_length = size_of_bg_rbg + size_of_triangles;
+}
+
+/* Set the mutation rate */
+void Artist::initializeMutationRate(double MUTATION_RATE)
+{
+  if(MUTATION_RATE >= 0 && MUTATION_RATE <= 1) { Artist::mutation_rate = MUTATION_RATE; }
+  else 
+  { 
+    std::cerr << "Mutation rate must be between 0.0 and 1.0.\nRate \
+                  provided: " << MUTATION_RATE << std::endl;
+    exit(1);
+  }
 }
 
 /* Set the crossover chance */
@@ -541,4 +538,11 @@ void Artist::setReproductionProportion(double avg_fitness, double std_dev)
     /* Everyone has a smöl chance to make it */
     if(expected_reproduction <= 0) { expected_reproduction = 0.1; }
   }
+}
+
+/* Sets the max number of triangles artists are allowed to express. */
+void Artist::setMaxExpression(size_t n)
+{
+  if(n > number_of_triangles) { n = number_of_triangles; }
+  expression_limit = n;
 }
