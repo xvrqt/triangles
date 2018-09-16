@@ -15,7 +15,7 @@ int main(int argc, char ** argv)
 	   triangles until they've earned it.
 	 */
 	if(OAAT_MODE) {
-	  Artist::setMaxExpression(0);
+	  Artist::setExpressionLimit(1);
 	}
 
 	/* Precompute locations and distances between them */
@@ -38,16 +38,22 @@ int main(int argc, char ** argv)
 		artists.push_back(new Artist());
 	}
 
+	/* Generate a hash map of Artist locations */
+	std::vector<Artist *> location_map(POPULATION_SIZE);
+
 	/* Main loops - runs for # of GENERATIONS */
 	bool run_forever = (GENERATIONS == 0); /* If # of generations is 0 -> run forever */
 	size_t number_of_generations_run = 0;  /* Keep track of which generation we're on */
+	size_t num_gens_no_improvement = 0;    /* Keep track for OAAT Mode */
+	bool has_made_improvement = false;     /* Don't add a triangle until it helps */
+	double best_fitness = std::numeric_limits<double>::max();
+	bool force_rescore = true;
 	for(;number_of_generations_run < GENERATIONS || run_forever; number_of_generations_run++)
 	{
 		/* Add the artists to a location indexed vector so that it's easy to 
 		   look them up later for mating. If a space is already occupied, it
 		   will search for the nearest empty location to fill.
 		*/
-		std::vector<Artist *> location_map(POPULATION_SIZE);
 		std::fill(location_map.begin(), location_map.end(), (Artist *)NULL);
 		for(auto a = artists.begin(); a != artists.end(); ++a)
 		{
@@ -83,7 +89,7 @@ int main(int argc, char ** argv)
 		std::vector<std::thread> threads;
 		for(auto a = artists.begin(); a != artists.end(); ++a)
 		{
-			if((*a)->getFitness() == std::numeric_limits<double>::max())
+			if((*a)->getFitness() == std::numeric_limits<double>::max() || force_rescore)
 			{
 				threads.push_back(std::thread([](Artist * a, Magick::Image source_image) {
 					a->crossover();
@@ -92,11 +98,12 @@ int main(int argc, char ** argv)
 				}, (*a), source));
 			}
 		}
-		for (auto& th : threads) { th.join(); }
+		for (auto & t : threads) { t.join(); }
+		force_rescore = false;
 
 		/* Sort the artists from best to worst */
 		std::sort(artists.begin(), artists.end(), [](const Artist * a, const Artist * b) -> bool { 
-        	return a->getFitness() < b->getFitness(); 
+        	return (a->getFitness() < b->getFitness()); 
     	});
 
 		/* Calculate the average fitness & std dev of the artists */
@@ -139,7 +146,6 @@ int main(int argc, char ** argv)
 			}
 			index++;
 		}
-		artists_proportional.resize(POPULATION_SIZE);
 
 		/* Mate the artists to produce the next generation in proportion to
 		   their fitness.
@@ -174,20 +180,39 @@ int main(int argc, char ** argv)
 			next_generation.push_back(new Artist(**a, *mate));
 		}
 
-		/* Print out the best fitness and save the best image */
-		if((number_of_generations_run % 25) == 0)
+		/* Check if this artist has the best fitness seen so far */
+		double this_gen_best_fitness = artists[0]->getFitness();
+		if(this_gen_best_fitness < best_fitness)
 		{
-			std::cout << artists[0]->getFitness() << std::endl;
+			best_fitness = this_gen_best_fitness;
+			num_gens_no_improvement = 0;
+			has_made_improvement = true;
+		}
+		if(has_made_improvement) { num_gens_no_improvement++; }
+
+		/* Print out the best fitness each round */
+		std::cout << this_gen_best_fitness << std::endl;
+
+		/* Check if we need to increase the number of triangles allowed to be expressed */
+		if(OAAT_MODE && num_gens_no_improvement >= OAAT_MODE)
+		{
+			/* Print out the best image from that number of triangles */
 			Magick::Image * best_image = artists[0]->draw();
 			std::string num_gens = std::to_string(number_of_generations_run);
 			best_image->write("output/" + num_gens + ".png");
 			delete best_image;
+
+			/* Reset the count, allow one more triangle */
+			has_made_improvement = false;
+			num_gens_no_improvement = 0;
+			force_rescore = true;
+			Artist::incrementExpressionLimit();
 		}
 
 		/* Delete old artists and copy the next_generation into the artists vector. */
-		for(auto a = artists.begin(); a != artists.end(); ++a)
+		for(auto a : artists)
 		{
-			delete (*a);
+			delete a;
 		}
 		artists.clear();
 		artists = next_generation;

@@ -398,34 +398,10 @@ void Artist::score()
   Magick::Image * canvas = draw();
   
   /* Compare the average pixel error to the original */
-  double rmse = canvas->compare(Artist::source_copy, Magick::RootMeanSquaredErrorMetric);
-
-  /* Resize the image, take its hash and compare to the source */
-  size_t hash_width  = (IMG_HASH_SQRT + 1);
-  size_t hash_height = IMG_HASH_SQRT;
-
-  std::string dimensions = "!" + std::to_string(hash_width) + "x!" + std::to_string(hash_height);
-  canvas->resize(dimensions);
-
-  /* Calculate the image hash */
-  size_t hash_length = IMG_HASH_SQRT * IMG_HASH_SQRT;
-  bool image_hash[hash_length];
-
-  calculateImageHash(*canvas, image_hash);
-
-  /* Calculate the Hamming Distance */
-  size_t h_dist = calculateHammingDistance(Artist::source_img_hash, image_hash, hash_length);
-
-  /* Normalize */
-  size_t half = (hash_length) / 2;
-  int penalty = std::abs((int)half - (int)h_dist);
-  double form_fitness = 1.0 - ((double)penalty / half);
+  fitness = canvas->compare(Artist::source_copy, Magick::RootMeanSquaredErrorMetric);
 
   /* Free the memory */
   delete canvas;
-
-  /* Combined fitness */
-  fitness = rmse + form_fitness;
 }
 
 /* Draw and return the image. Creates a NEW image that the caller is 
@@ -542,8 +518,17 @@ void Artist::setReproductionProportion(double avg_fitness, double std_dev)
 }
 
 /* Sets the max number of triangles artists are allowed to express. */
-void Artist::setMaxExpression(size_t n)
+void Artist::setExpressionLimit(size_t n)
 {
   if(n > number_of_triangles) { n = number_of_triangles; }
   expression_limit = n;
+}
+
+/* Increments the expression limit by 1 (if possible) */
+void Artist::incrementExpressionLimit()
+{
+  if(expression_limit < number_of_triangles)
+  {
+    expression_limit++;
+  }
 }

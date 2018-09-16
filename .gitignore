@@ -7,6 +7,9 @@
 *.jpeg
 *.gif
 
+# Directories
+output/
+
 # Not images required for the test/main to run
 !test_resources/too_big.png
 !test_resources/image.png
