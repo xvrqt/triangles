@@ -8,6 +8,7 @@
 #include <getopt.h>
 
 #include <string>
+#include <algorithm>
 
 /* Path to the image that the artist is to draw */
 extern char * IMAGE_PATH;
