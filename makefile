@@ -13,6 +13,7 @@ endif
 
 CCFLAGS = -Wall -std=c++11 -c -O3
 IMAGE_MAGICK := $(shell Magick++-config --cxxflags --cppflags --ldflags --libs)
+OPEN_CV := $(pkg-config --cflags --libs opencv)
 
 triangles: main.o $(OBJS)
 	$(CC) main.o $(OBJS) $(IMAGE_MAGICK) -O3 -o $(NAME)
