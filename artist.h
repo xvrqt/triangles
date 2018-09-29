@@ -148,6 +148,9 @@ class Artist
       /* Sets the max number of triangles artists are allowed to express. */
       static void setExpressionLimit(size_t n);
 
+      /* Gets the max number of triangles artists are allowed to express. */
+      static size_t getExpressionLimit();
+
       /* Increments the expression limit by 1 (if possible) */
       static void incrementExpressionLimit();
 

@@ -489,6 +489,12 @@ double Artist::getExpectedReproduction() const
   return expected_reproduction;
 }
 
+/* Gets the max number of triangles artists are allowed to express. */
+size_t Artist::getExpressionLimit()
+{
+  return expression_limit;
+}
+
 /* * * * * * * * * * * * * * * * * * *
  *              Setters              *
  * * * * * * * * * * * * * * * * * * */

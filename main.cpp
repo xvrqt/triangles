@@ -194,22 +194,24 @@ int main(int argc, char ** argv)
 		std::cout << this_gen_best_fitness << std::endl;
 
 		/* Check if we need to increase the number of triangles allowed to be expressed */
-		if((OAAT_MODE && num_gens_no_improvement >= OAAT_MODE) || (number_of_generations_run % 50) == 0)
+		if(number_of_generations_run % 50 == 0)
 		{
 			/* Print out the best image from that number of triangles */
 			Magick::Image * best_image = artists[0]->draw();
 			std::string num_gens = std::to_string(number_of_generations_run);
 			best_image->write("output/" + num_gens + ".png");
 			delete best_image;
+		}
 
-			/* Reset the count, allow one more triangle */
-			if(OAAT_MODE)
-			{
-				has_made_improvement = false;
-				num_gens_no_improvement = 0;
-				force_rescore = true;
-				Artist::incrementExpressionLimit();
-			}
+		/* Reset the count, allow one more triangle */
+		if(OAAT_MODE && num_gens_no_improvement >= OAAT_MODE)
+		{
+			has_made_improvement = false;
+			num_gens_no_improvement = 0;
+			force_rescore = true;
+			Artist::incrementExpressionLimit();
+			size_t num_triangles = (Artist::getExpressionLimit() > GENOME_LENGTH) ? GENOME_LENGTH : Artist::getExpressionLimit();
+			std::cout << "Adding Trianle - " << num_triangles << " triangles in total\n";
 		}
 
 		/* Delete old artists and copy the next_generation into the artists vector. */
