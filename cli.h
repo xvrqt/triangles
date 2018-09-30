@@ -58,6 +58,12 @@ extern Xover_type XOVER_TYPE;
 /* Chance, per bit, of being flipped each generation. Defaults to 0.005. */
 extern double MUTATION_RATE;
 
+/* Enables/Disables Artist location. If disbled Artists will mate based on 
+   reproductive proportion only, and not take locality into account.
+   Defaults to being enabled.
+ */
+extern bool LOCATION_ENABLED;
+
 /* Puts all the arguments into the variables */
 void parseArgs(int argc, char ** argv);
 

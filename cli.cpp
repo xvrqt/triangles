@@ -34,6 +34,11 @@ Xover_type XOVER_TYPE = Xover_type::BIT;
 /* Chance, per bit, of being flipped each generation. Defaults to 0.005. */
 double MUTATION_RATE = 0.005;
 
+/* Enables/Disables Artist location. If disbled Artists will mate based on 
+   reproductive proportion only, and not take locality into account.
+ */
+bool LOCATION_ENABLED = true;
+
 void parseArgs(int argc, char ** argv)
 {
     int c;
@@ -51,6 +56,7 @@ void parseArgs(int argc, char ** argv)
             {"crossover-chance",    required_argument, 0, 'x'},
             {"crossover-type",      required_argument, 0, 't'},
             {"mutation-rate",       required_argument, 0, 'm'},
+            {"simulate-location",   required_argument, 0, 'l'},
             {0, 0, 0, 0}
         };
 
@@ -58,7 +64,7 @@ void parseArgs(int argc, char ** argv)
         int option_index = 0;
 
         /* Short codes for characters */
-        const char * short_options = "i:g:o:e:p:n:r:x:t:m:";
+        const char * short_options = "i:g:o:e:p:n:r:x:t:m:l:";
 
         c = getopt_long(argc, argv, short_options, long_options, &option_index);
 
@@ -161,6 +167,7 @@ void parseArgs(int argc, char ** argv)
             case 't': {
                 std::string type(optarg);
                 std::transform(type.begin(), type.end(), type.begin(), ::tolower);
+
                 if(type == "bit") { XOVER_TYPE = Xover_type::BIT; }
                 else if(type == "byte") { XOVER_TYPE = Xover_type::BYTE; }
                 else if(type == "triangle") { XOVER_TYPE = Xover_type::TRIANGLE; }
@@ -176,6 +183,19 @@ void parseArgs(int argc, char ** argv)
                 if(MUTATION_RATE < 0 || MUTATION_RATE > 1)
                 { 
                     printf("Mutation rate must be between 0.0 and 1.0.\nRate provided:%f", MUTATION_RATE);
+                    exit(1);
+                }
+                break;
+            }
+            case 'l': {
+                std::string loc(optarg);
+                std::transform(loc.begin(), loc.end(), loc.begin(), ::tolower);
+
+                if(loc == "false") { LOCATION_ENABLED = false; }
+                else if(loc == "true") { LOCATION_ENABLED = true; }
+                else
+                { 
+                    printf("Simulate-location must be either \"true\" or \"false\" in value.\nYou provided: %s\n", optarg);
                     exit(1);
                 }
                 break;

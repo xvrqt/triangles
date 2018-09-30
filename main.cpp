@@ -29,6 +29,8 @@ int main(int argc, char ** argv)
 
 	/* Initialize the srand for crossover/mutation decisions */
 	srand(RANDOM_SEED);
+    std::mt19937 rand_engine(RANDOM_SEED);
+    std::uniform_int_distribution<> rand_artist_index(0,POPULATION_SIZE);
 
 	/* Generate a list of Artists */
 	std::vector<Artist *> artists;
@@ -38,8 +40,8 @@ int main(int argc, char ** argv)
 		artists.push_back(new Artist());
 	}
 
-	/* Generate a hash map of Artist locations */
-	std::vector<Artist *> location_map(POPULATION_SIZE);
+    /* Generate a hash map of Artist locations */
+    std::vector<Artist *> location_map(POPULATION_SIZE);
 
 	/* Main loops - runs for # of GENERATIONS */
 	bool run_forever = (GENERATIONS == 0); /* If # of generations is 0 -> run forever */
@@ -162,19 +164,27 @@ int main(int argc, char ** argv)
 			}
 
 			Artist * mate = NULL;
-			/* Random mate selection based on distance */
-			double sum = 0.0;
-			double zero_to_one = ((double)rand()/RAND_MAX);
-			auto v = location_likelihood_map[(*a)->getLocationIndex()];
-			for(auto it = v.begin(); it != v.end(); ++it)
-			{
-				/* Add the percent distance to the sum */
-				sum += (*it).first;
-				/* If the sum is greater or equal to zero_to_one; mate with
-				   that artist.
-				 */
-				if(sum >= zero_to_one) { mate = location_map[(*it).second]; }
-			}
+            if(LOCATION_ENABLED)
+            {
+			  /* Random mate selection based on distance */
+			  double sum = 0.0;
+			  double zero_to_one = ((double)rand()/RAND_MAX);
+			  auto v = location_likelihood_map[(*a)->getLocationIndex()];
+			  for(auto it = v.begin(); it != v.end(); ++it)
+              {
+                /* Add the percent distance to the sum */
+                sum += (*it).first;
+                /* If the sum is greater or equal to zero_to_one; mate with
+                   that artist.
+                 */
+                 if(sum >= zero_to_one) { mate = location_map[(*it).second]; }
+               }
+            }
+            else /* Mate randomly (but in proportion) */
+            {
+               size_t index = rand_artist_index(rand_engine);
+               mate = artists_proportional[index];
+            }
 
 			/* Push the baby of the artists into the next generation. */
 			next_generation.push_back(new Artist(**a, *mate));
