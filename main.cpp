@@ -30,7 +30,7 @@ int main(int argc, char ** argv)
 	/* Initialize the srand for crossover/mutation decisions */
 	srand(RANDOM_SEED);
     std::mt19937 rand_engine(RANDOM_SEED);
-    std::uniform_int_distribution<> rand_artist_index(0,POPULATION_SIZE);
+    std::uniform_int_distribution<> rand_artist_index(0,POPULATION_SIZE - 1);
 
 	/* Generate a list of Artists */
 	std::vector<Artist *> artists;
