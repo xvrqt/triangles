@@ -2,92 +2,85 @@
 
 int main(int argc, char ** argv)
 {	
-	/* Turns command line arguments into hyper parameters. */
+	/* Turns command line arguments into global parameters. See cli.h for 
+	   details.
+	 */
 	parseArgs(argc, argv);
 	
 	/* Allows use of ImageMagick */
 	Magick::InitializeMagick(*argv);
 
-	/* Initialize Artist settings with runtime parameters. */
+	/* Initialize Artist settings with runtime parameters. This sets static
+	   member variables so we can use the default constructor for Artists.
+	 */
 	Artist::initialization(RANDOM_SEED, GENOME_LENGTH, MUTATION_RATE, XOVER_CHANCE, XOVER_TYPE);
 
-	/* If One At A Time Mode is set, don't allow artists to express any 
-	   triangles until they've earned it.
+	/* If One At A Time Mode is set Artists begin only expressing one 
+	   triangle. 
 	 */
-	if(OAAT_MODE) {
-	  Artist::setExpressionLimit(1);
-	}
+	if(OAAT_MODE) { Artist::setExpressionLimit(1); }
 
-	/* Precompute locations and distances between them */
-	auto adjacency_matrix = getLocationLikelihoodMap(POPULATION_SIZE);
+	/* Create a matrix of adjacent locations. */
+	std::vector<std::vector<size_t>> adjacency_matrix;
+	if(SIMULATE_LOCATION) 
+	{ 
+		adjacency_matrix = getAdjacencyMatrix(POPULATION_SIZE, SIMULATE_LOCATION);
+	}
 
 	/* Open the source Image */
 	Magick::Image source = openImage(IMAGE_PATH);
 
-	/* Precompute the image hash to save time in the future */
+	/* Copy the image into the Artist class so it can be used as a reference 
+	   for scoring the artists later.
+	 */
 	Artist::initializeSourceImage(source);
 
-	/* Initialize the srand for crossover/mutation decisions */
+	/* Initialize the srand for crossover/mutation decisions. Initialize a 
+	   a random engine so we can */
 	srand(RANDOM_SEED);
     std::mt19937 rand_engine(RANDOM_SEED);
-    std::uniform_int_distribution<> rand_artist_index(0,POPULATION_SIZE - 1);
+    std::uniform_int_distribution<int> rand_artist_index(0,POPULATION_SIZE - 1);
 
 	/* Generate a list of Artists */
 	std::vector<Artist *> artists;
-	artists.reserve(POPULATION_SIZE); /* Save us reallocating a few times */
+	artists.reserve(POPULATION_SIZE);
 	for(size_t i = 0; i < POPULATION_SIZE; i++)
 	{
 		artists.push_back(new Artist());
 	}
 
-    /* Generate a hash map of Artist locations */
-    std::vector<Artist *> location_map(POPULATION_SIZE);
+    /* Generate a hash map of Artist locations. */
+    std::vector<Artist *> artists_locations(POPULATION_SIZE);
+
+	/* If # of generations is 0 -> run forever */
+	bool run_forever = (GENERATIONS == 0); 
+
+    /* Keep track of which generation we're on */
+	size_t number_of_generations_run = 0;  
+	
+	/* One at time mode - artists render 1 triangle until they make an 
+	   improvement. Once an improvement has been made it begins counting 
+	   generations hence; reseting when fitness improves. Once the number of
+	   generations without improvement > OAAT_MODE it increases the number of 
+	   triangles permitted to be expressed.
+	 */
+	bool has_made_improvement = false;     /* Don't add a triangle until it helps */
+	size_t num_gens_no_improvement = 0;    /* Keep track for OAAT Mode */
+
+	/* Forces every artist (even clones) to be rescored */
+	bool force_rescore = true;
+	
+	/* The best fitness we've seen thus far */
+	double best_fitness = std::numeric_limits<double>::max();
 
 	/* Main loops - runs for # of GENERATIONS */
-	bool run_forever = (GENERATIONS == 0); /* If # of generations is 0 -> run forever */
-	size_t number_of_generations_run = 0;  /* Keep track of which generation we're on */
-	size_t num_gens_no_improvement = 0;    /* Keep track for OAAT Mode */
-	bool has_made_improvement = false;     /* Don't add a triangle until it helps */
-	double best_fitness = std::numeric_limits<double>::max();
-	bool force_rescore = true;
 	for(;number_of_generations_run < GENERATIONS || run_forever; number_of_generations_run++)
 	{
 		/* Add the artists to a location indexed vector so that it's easy to 
 		   look them up later for mating. If a space is already occupied, it
 		   will search for the nearest empty location to fill.
 		*/
-		std::fill(location_map.begin(), location_map.end(), (Artist *)NULL);
-		for(auto a = artists.begin(); a != artists.end(); ++a)
-		{
-			size_t location_index = (*a)->getLocationIndex();
-			/* If the location is available - add the Artist there */
-			if(location_map[location_index] == NULL)
-			{
-				location_map[location_index] = (*a);
-			}
-			else /* Find a new location based on the precomputed map. */
-			{
-				/* Go down the list, from closest to furthest and try to
-				   find an empty location.
-				 */
-                for(size_t i = 0; i < POPULATION_SIZE; i++)
-                {
-                  
-                  location_index = (location_index + i) % POPULATION_SIZE;
-				  auto v = adjacency_matrix[location_index];
-				  for(auto it = v.begin(); it != v.end(); ++it)
-				  {
-					location_index = (*it);
-					if(location_map[location_index] == NULL)
-					{
-						location_map[location_index] = (*a);
-						(*a)->setLocationIndex(location_index);
-						break;
-					}
-			      }
-                }
-			}
-		}
+		computeArtistLocation(artists, adjacency_matrix, artists_locations);
 
 		/* Run through the list of artists, perform crossover, mutate them and
 		   and score them.
@@ -170,10 +163,10 @@ int main(int argc, char ** argv)
             size_t index = rand_artist_index(rand_engine);
 
 			Artist * mate = NULL;
-            if(LOCATION_ENABLED) /* Mate only with adjacent dealios */
+            if(SIMULATE_LOCATION) /* Mate only with adjacent dealios */
             {
 			  auto am = adjacency_matrix[(*a)->getLocationIndex()];
-              mate = location_map[am[index % am.size()]];
+              mate = artists_locations[am[index % am.size()]];
             }
             else /* Mate randomly (but in proportion) */
             {
@@ -198,12 +191,15 @@ int main(int argc, char ** argv)
 		std::cout << this_gen_best_fitness << std::endl;
 
 		/* Check if we need to increase the number of triangles allowed to be expressed */
+		size_t num_triangles = (Artist::getExpressionLimit() > GENOME_LENGTH) ? GENOME_LENGTH : Artist::getExpressionLimit();
 		if(number_of_generations_run % 50 == 0)
 		{
 			/* Print out the best image from that number of triangles */
 			Magick::Image * best_image = artists[0]->draw();
 			std::string num_gens = std::to_string(number_of_generations_run);
-			best_image->write("output/" + num_gens + ".png");
+			std::string num_tri = std::to_string(num_triangles);
+			std::string best_fit = std::to_string(best_fitness);
+			best_image->write("output/" + num_gens + "_" + num_tri + "_" + best_fit + ".png");
 			delete best_image;
 		}
 
@@ -214,7 +210,6 @@ int main(int argc, char ** argv)
 			num_gens_no_improvement = 0;
 			force_rescore = true;
 			Artist::incrementExpressionLimit();
-			size_t num_triangles = (Artist::getExpressionLimit() > GENOME_LENGTH) ? GENOME_LENGTH : Artist::getExpressionLimit();
 			std::cout << "Adding Trianle - " << num_triangles << " triangles in total\n";
 		}
 

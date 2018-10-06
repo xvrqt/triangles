@@ -34,10 +34,13 @@ Xover_type XOVER_TYPE = Xover_type::BIT;
 /* Chance, per bit, of being flipped each generation. Defaults to 0.005. */
 double MUTATION_RATE = 0.005;
 
-/* Enables/Disables Artist location. If disbled Artists will mate based on 
-   reproductive proportion only, and not take locality into account.
+/* Enables/Disables Artist location. If set to 0 Artists will mate based on 
+   reproductive proportion only, and not take locality into account. If set
+   it will act as though artists are adjacent to N number of other artists 
+   and restrict mating choices to those artists.
+   Defaults to 4.
  */
-bool LOCATION_ENABLED = true;
+uint8_t SIMULATE_LOCATION = 4;
 
 void parseArgs(int argc, char ** argv)
 {
@@ -188,15 +191,15 @@ void parseArgs(int argc, char ** argv)
                 break;
             }
             case 'l': {
-                std::string loc(optarg);
-                std::transform(loc.begin(), loc.end(), loc.begin(), ::tolower);
-
-                if(loc == "false") { LOCATION_ENABLED = false; }
-                else if(loc == "true") { LOCATION_ENABLED = true; }
-                else
+                int l = atoi(optarg);
+                if(l <= 1 && l != 0)
                 { 
-                    printf("Simulate-location must be either \"true\" or \"false\" in value.\nYou provided: %s\n", optarg);
+                    printf("Simulate-location must be either 0 or >1 in value.\nYou provided: %s\n", optarg);
                     exit(1);
+                }
+                else
+                {
+                    SIMULATE_LOCATION = l;
                 }
                 break;
             }

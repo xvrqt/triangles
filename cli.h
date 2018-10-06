@@ -10,6 +10,8 @@
 #include <string>
 #include <algorithm>
 
+typedef u_int8_t uint8_t;
+
 /* Path to the image that the artist is to draw */
 extern char * IMAGE_PATH;
 
@@ -58,11 +60,13 @@ extern Xover_type XOVER_TYPE;
 /* Chance, per bit, of being flipped each generation. Defaults to 0.005. */
 extern double MUTATION_RATE;
 
-/* Enables/Disables Artist location. If disbled Artists will mate based on 
-   reproductive proportion only, and not take locality into account.
-   Defaults to being enabled.
+/* Enables/Disables Artist location. If set to 0 Artists will mate based on 
+   reproductive proportion only, and not take locality into account. If set
+   it will act as though artists are adjacent to N number of other artists 
+   and restrict mating choices to those artists.
+   Defaults to 4.
  */
-extern bool LOCATION_ENABLED;
+extern uint8_t SIMULATE_LOCATION;
 
 /* Puts all the arguments into the variables */
 void parseArgs(int argc, char ** argv);

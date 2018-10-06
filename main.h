@@ -1,9 +1,9 @@
 /* Amy Jie - 2018 */
 #include <Magick++.h> 
 
+#include <thread>
 #include <algorithm>
 
-#include <thread>
 #include <stdlib.h>
 
 #include "cli.h"
