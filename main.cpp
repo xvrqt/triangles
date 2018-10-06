@@ -19,7 +19,7 @@ int main(int argc, char ** argv)
 	}
 
 	/* Precompute locations and distances between them */
-	auto location_likelihood_map = getLocationLikelihoodMap(POPULATION_SIZE);
+	auto adjacency_matrix = getLocationLikelihoodMap(POPULATION_SIZE);
 
 	/* Open the source Image */
 	Magick::Image source = openImage(IMAGE_PATH);
@@ -70,18 +70,22 @@ int main(int argc, char ** argv)
 				/* Go down the list, from closest to furthest and try to
 				   find an empty location.
 				 */
-				auto v = location_likelihood_map[location_index];
-				for(auto it = v.begin(); it != v.end(); ++it)
-				{
-					/* std::pair<double, size_t> (relative closeness, location index) */
-					location_index = (*it).second;
+                for(size_t i = 0; i < POPULATION_SIZE; i++)
+                {
+                  
+                  location_index = (location_index + i) % POPULATION_SIZE;
+				  auto v = adjacency_matrix[location_index];
+				  for(auto it = v.begin(); it != v.end(); ++it)
+				  {
+					location_index = (*it);
 					if(location_map[location_index] == NULL)
 					{
 						location_map[location_index] = (*a);
 						(*a)->setLocationIndex(location_index);
 						break;
 					}
-				}
+			      }
+                }
 			}
 		}
 
@@ -163,26 +167,16 @@ int main(int argc, char ** argv)
 				next_generation.push_back(new Artist(**a));
 			}
 
+            size_t index = rand_artist_index(rand_engine);
+
 			Artist * mate = NULL;
-            if(LOCATION_ENABLED)
+            if(LOCATION_ENABLED) /* Mate only with adjacent dealios */
             {
-			  /* Random mate selection based on distance */
-			  double sum = 0.0;
-			  double zero_to_one = ((double)rand()/RAND_MAX);
-			  auto v = location_likelihood_map[(*a)->getLocationIndex()];
-			  for(auto it = v.begin(); it != v.end(); ++it)
-              {
-                /* Add the percent distance to the sum */
-                sum += (*it).first;
-                /* If the sum is greater or equal to zero_to_one; mate with
-                   that artist.
-                 */
-                 if(sum >= zero_to_one) { mate = location_map[(*it).second]; }
-               }
+			  auto am = adjacency_matrix[(*a)->getLocationIndex()];
+              mate = location_map[am[index % am.size()]];
             }
             else /* Mate randomly (but in proportion) */
             {
-               size_t index = rand_artist_index(rand_engine);
                mate = artists_proportional[index];
             }
 
