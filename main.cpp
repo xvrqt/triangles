@@ -73,6 +73,16 @@ int main(int argc, char ** argv)
 	/* The best fitness we've seen thus far */
 	double best_fitness = std::numeric_limits<double>::max();
 
+	/* The number of processors available to us will determine how many threads
+	   we will want to create.
+	 */
+	unsigned int num_threads = std::thread::hardware_concurrency();
+	if(num_threads == 0) { num_threads = 1; }
+
+	/* Used to allocate a portion of the population to each thread */
+	size_t num_artists_per_thread = (POPULATION_SIZE / num_threads);
+	size_t additional_artist_index = (POPULATION_SIZE % num_threads);
+
 	/* Main loops - runs for # of GENERATIONS */
 	for(;number_of_generations_run < GENERATIONS || run_forever; number_of_generations_run++)
 	{
@@ -80,23 +90,44 @@ int main(int argc, char ** argv)
 		   look them up later for mating. If a space is already occupied, it
 		   will search for the nearest empty location to fill.
 		*/
-		computeArtistLocation(artists, adjacency_matrix, artists_locations);
+		if(SIMULATE_LOCATION)
+		{
+			computeArtistLocation(artists, adjacency_matrix, artists_locations);
+		}
 
 		/* Run through the list of artists, perform crossover, mutate them and
-		   and score them.
+		   and score them. Split the list to take advantage of the number of 
+		   processors on the machine.
 		 */
 		std::vector<std::thread> threads;
-		for(auto a = artists.begin(); a != artists.end(); ++a)
+		size_t prev_index = 0;
+		for(size_t i = 0; i < num_threads; i++)
 		{
-			if((*a)->getFitness() == std::numeric_limits<double>::max() || force_rescore)
-			{
-				threads.push_back(std::thread([](Artist * a, Magick::Image source_image) {
+			/* Determine the number of artists this thread will act on */
+			size_t num_artists = num_artists_per_thread;
+			if(i < additional_artist_index) { num_artists++; }
+			
+			/* Copy the portion of the population into the thread */
+			std::vector<Artist *> a_t(num_artists);
+			auto start_index = artists.begin() + prev_index;
+			auto end_index = start_index + num_artists;
+			std::copy(start_index, end_index, a_t.begin());
+			
+			/* Create the thread */
+			threads.push_back(std::thread([](std::vector<Artist *> const & v) {
+				for(auto & a : v)
+				{
 					a->crossover();
 					a->mutate();
 					a->score();
-				}, (*a), source));
-			}
+				}
+			}, a_t));
+
+			/* Update the beginning of the range */
+			prev_index += num_artists;
 		}
+
+		/* Wait for all threads to complete */
 		for (auto & t : threads) { t.join(); }
 		force_rescore = false;
 
