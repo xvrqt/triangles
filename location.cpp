@@ -61,35 +61,38 @@ void computeArtistLocation( std::vector<Artist *> & artists,
     }
     else /* Find a new location based on the precomputed map. */
     {
-      bool location_found = false;
-      /* Try locations immediately adjacent */
-      for(int i = 0; i < POPULATION_SIZE; i++)
+      /* Keep track of where we've already tried */
+      std::vector<bool> tried_locations(POPULATION_SIZE, false);
+      tried_locations[location_index] = true;
+
+      /* Add adjacent locations to the queue of locations to try. */
+      std::queue<size_t> untried_locations;
+      auto ami = adjacency_matrix[location_index];
+      for(auto & location : ami) { untried_locations.push(location); }
+
+      /* While we still have locations to try... */
+      while(!(untried_locations.empty()))
       {
-        if(location_found) { break; }
-
-        /* Start at the artist's current location, if this fails, try locations
-           +/- 1, +/- 2, etc... as these are the closest to this location.
-         */
-        int idx = (i % 2) ? (i * -1) : i;
-        idx = idx - (idx / 2);
-
-        idx = (location_index + idx) % POPULATION_SIZE;
-        if(idx < 0) { idx = POPULATION_SIZE + idx; }
-
-        /* Get a list of locations adjacent to this location */
-        auto v = adjacency_matrix[idx];
-        
-        /* See if any adjacent locations are open */
-        for(auto loc = v.begin(); loc != v.end(); ++loc)
+        size_t location = untried_locations.front();
+        if(artist_locations[location] == NULL)
         {
-          size_t new_location_index = (*loc);
-          if(artist_locations[new_location_index] == NULL)
-          {
-            artist_locations[new_location_index] = (*a);
-            (*a)->setLocationIndex(new_location_index);
-            location_found = true;
-            break;
+          artist_locations[location] = (*a);
+          (*a)->setLocationIndex(location);
+          break;
+        }
+        else /* Add items adjacent to this location to the queue. */
+        {
+          auto ami = adjacency_matrix[location];
+          for(auto & loc : ami) 
+          { 
+            /* Only add a location if it's not already in the queue */
+            if(!(tried_locations[loc]))
+            {
+              untried_locations.push(loc);
+              tried_locations[loc] = true;
+            }
           }
+          untried_locations.pop();
         }
       }
     }

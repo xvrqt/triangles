@@ -1,6 +1,7 @@
 #include "cli.h"
 
 #include <cmath>
+#include <queue>
 #include <vector>
 #include <iostream>
 

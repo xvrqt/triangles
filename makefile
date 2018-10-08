@@ -11,7 +11,7 @@ ifeq ($(OS), Linux)
         CC = g++
 endif
 
-CCFLAGS = -Wall -std=c++11 -c -O3
+CCFLAGS = -Wall -std=c++11 -c -03
 IMAGE_MAGICK := $(shell Magick++-config --cxxflags --cppflags --ldflags --libs)
 OPEN_CV := $(pkg-config --cflags --libs opencv)
 

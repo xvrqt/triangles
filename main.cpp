@@ -49,7 +49,9 @@ int main(int argc, char ** argv)
 		artists.push_back(new Artist());
 	}
 
-    /* Generate a hash map of Artist locations. */
+    /* If SIMULATE_LOCATION is set - this is used to store artist locations on
+       the "map."
+     */
     std::vector<Artist *> artists_locations(POPULATION_SIZE);
 
 	/* If # of generations is 0 -> run forever */
