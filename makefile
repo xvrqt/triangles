@@ -11,12 +11,13 @@ ifeq ($(OS), Linux)
         CC = g++
 endif
 
-CCFLAGS = -Wall -std=c++11 -c -03
+DEBUG = -O3
+CCFLAGS = -Wall -std=c++11 -c $(DEBUG)
 IMAGE_MAGICK := $(shell Magick++-config --cxxflags --cppflags --ldflags --libs)
 OPEN_CV := $(pkg-config --cflags --libs opencv)
 
 triangles: main.o $(OBJS)
-	$(CC) main.o $(OBJS) $(IMAGE_MAGICK) -O3 -o $(NAME)
+	$(CC) main.o $(OBJS) $(IMAGE_MAGICK) $(DEBUG) -o $(NAME)
 
 main.o: main.h main.cpp cli.h image.h artist.h triangle.h location.h
 	$(CC) $(CCFLAGS) $(IMAGE_MAGICK) main.cpp
