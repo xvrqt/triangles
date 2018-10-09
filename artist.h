@@ -59,6 +59,9 @@ class Artist
   /* Index into where the artist lives in the Artist Location Map */
   size_t location_index;
 
+  /* If the artist has been cloned */
+  bool is_clone;
+
   /* Static random engine */
   static std::default_random_engine rand_engine;
   static std::independent_bits_engine<std::default_random_engine, 8, unsigned char> rand_byte_generator;
@@ -138,6 +141,12 @@ class Artist
 
       /* Returns the expected_reproduction of the Artist. # getters */
       double getExpectedReproduction() const;
+
+      /* Returns true if the artist is a clone. False otherwise. */
+      bool isClone() const;
+
+      /* Sets is_clone to true */
+      void makeClone();
 
       /* Set the location index - in case it already exists */
       void setLocationIndex(size_t index);

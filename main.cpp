@@ -120,9 +120,14 @@ int main(int argc, char ** argv)
 			threads.push_back(std::thread([](std::vector<Artist *> const & v) {
 				for(auto & a : v)
 				{
-					a->crossover();
-					a->mutate();
-					a->score();
+					/* Don't alter / rescore clones */
+					if(a->isClone() && CLONE_ELITES) { continue; }
+					else 
+					{
+						a->crossover();
+						a->mutate();
+						a->score();
+					}
 				}
 			}, a_t));
 

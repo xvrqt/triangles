@@ -22,6 +22,9 @@ size_t GENERATIONS = 0;
  */
 size_t ELITISM = 0;
 
+/* If true, elites do not mutate/crossover in the next round. */
+bool CLONE_ELITES = true;
+
 /* srand() seed for repeatable testing */
 unsigned int RANDOM_SEED = time(NULL);
 
@@ -38,7 +41,6 @@ double MUTATION_RATE = 0.005;
    reproductive proportion only, and not take locality into account. If set
    it will act as though artists are adjacent to N number of other artists 
    and restrict mating choices to those artists.
-   Defaults to 4.
  */
 uint8_t SIMULATE_LOCATION = 4;
 
@@ -55,6 +57,7 @@ void parseArgs(int argc, char ** argv)
             {"population-size",     required_argument, 0, 'p'},
             {"generations",         required_argument, 0, 'n'},
             {"elitism",             required_argument, 0, 'e'},
+            {"clone-elites",        required_argument, 0, 'c'},
             {"random-seed",         required_argument, 0, 'r'},
             {"crossover-chance",    required_argument, 0, 'x'},
             {"crossover-type",      required_argument, 0, 't'},
@@ -67,7 +70,7 @@ void parseArgs(int argc, char ** argv)
         int option_index = 0;
 
         /* Short codes for characters */
-        const char * short_options = "i:g:o:e:p:n:r:x:t:m:l:";
+        const char * short_options = "i:g:o:e:c:p:n:r:x:t:m:l:";
 
         c = getopt_long(argc, argv, short_options, long_options, &option_index);
 
@@ -126,6 +129,18 @@ void parseArgs(int argc, char ** argv)
                 {
                     ELITISM = (size_t)e;
                 }                
+                break;
+            }
+            case 'c': {
+                std::string c(optarg);
+                std::transform(c.begin(), c.end(), c.begin(), ::tolower);
+                if(c == "true") { CLONE_ELITES = true; }
+                else if(c == "false") { CLONE_ELITES = false; }
+                else
+                {
+                    printf("clone-elites must be \"true\" or \"false\".\nInput provided: %s\n", optarg);
+                    exit(1);
+                }
                 break;
             }
             case 'p': {

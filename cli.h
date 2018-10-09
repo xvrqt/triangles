@@ -43,6 +43,15 @@ extern size_t GENERATIONS;
  */
 extern size_t ELITISM;
 
+/* If set to true - elites are cloned, and are directly added to the next
+   generation. If false, elites are guaranteed to reproduce, but still
+   crossover and mutate during the next round. i.e. if this is true fitness
+   will only ever improve.
+
+   Defaults to true.
+ */
+extern bool CLONE_ELITES;
+
 /* srand() seed for repeatable testing. Defaults to 0. */
 extern unsigned int RANDOM_SEED;
 

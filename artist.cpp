@@ -202,6 +202,9 @@ Artist::Artist()
 
   /* Sets the location index */
   location_index = Artist::count++;
+
+  /* New artists are not clones */
+  is_clone = false;
 }
 
 /* Generates a new Artist from two parent artists. Caller is responsible
@@ -225,6 +228,9 @@ Artist::Artist(const Artist &a, const Artist &b)
 
   /* Copy A's location index. Don't increment. */
   location_index = a.location_index;
+
+  /* Babies are not clones */
+  is_clone = false;
 }
 
 /* Copy constuctor */
@@ -233,6 +239,8 @@ Artist::Artist(Artist const &that)
   fitness = that.fitness;
   location_index = that.location_index;
   expected_reproduction = that.expected_reproduction;
+
+  is_clone = true;
 
   /* Allocate new memory for the new chromosome */
   chromosome.dominant = (uint8_t *) malloc(Artist::genome_length);
@@ -487,6 +495,18 @@ size_t Artist::getLocationIndex() const
 double Artist::getExpectedReproduction() const
 {
   return expected_reproduction;
+}
+
+/* Returns true if the artist is a clone. False otherwise. */
+bool Artist::isClone() const
+{
+  return is_clone;
+}
+
+/* Sets is_clone to true */
+void Artist::makeClone()
+{
+  is_clone = true;
 }
 
 /* Gets the max number of triangles artists are allowed to express. */
