@@ -40,6 +40,7 @@ int main(int argc, char ** argv)
 	srand(RANDOM_SEED);
     std::mt19937 rand_engine(RANDOM_SEED);
     std::uniform_int_distribution<int> rand_artist_index(0,POPULATION_SIZE - 1);
+    std::uniform_int_distribution<int> rand_location_index(0,SIMULATE_LOCATION - 1);
 
 	/* Generate a list of Artists */
 	std::vector<Artist *> artists;
@@ -180,7 +181,7 @@ int main(int argc, char ** argv)
 		}
 
 		/* Mate the artists to produce the next generation in proportion to
-		   their fitness.
+		   their fitness. THERE MAY BE A BUG HERE !
 		 */
 		std::vector<Artist *> next_generation;
 		next_generation.reserve(POPULATION_SIZE);
@@ -193,17 +194,17 @@ int main(int argc, char ** argv)
 				next_generation.push_back(new Artist(**a));
 			}
 
-            size_t index = rand_artist_index(rand_engine);
-
 			Artist * mate = NULL;
             if(SIMULATE_LOCATION) /* Mate only with adjacent dealios */
             {
+              size_t loc_index = rand_location_index(rand_engine);
 			  auto am = adjacency_matrix[(*a)->getLocationIndex()];
-              mate = artists_locations[am[index % am.size()]];
+              mate = artists_locations[am[loc_index]];
             }
             else /* Mate randomly (but in proportion) */
             {
-               mate = artists_proportional[index];
+              size_t artist_index = rand_artist_index(rand_engine);
+               mate = artists_proportional[artist_index];
             }
 
 			/* Push the baby of the artists into the next generation. */

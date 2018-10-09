@@ -20,7 +20,7 @@ size_t GENERATIONS = 0;
 /* The top N Artists from each population will rollover into the next 
    generation.
  */
-size_t ELITISM = POPULATION_SIZE / 10;
+size_t ELITISM = 0;
 
 /* srand() seed for repeatable testing */
 unsigned int RANDOM_SEED = time(NULL);
@@ -29,7 +29,7 @@ unsigned int RANDOM_SEED = time(NULL);
 double XOVER_CHANCE = 0.7;
 
 /* Where the genome is allowed to crossover */
-Xover_type XOVER_TYPE = Xover_type::BIT;
+Xover_type XOVER_TYPE = Xover_type::TRIANGLE;
 
 /* Chance, per bit, of being flipped each generation. Defaults to 0.005. */
 double MUTATION_RATE = 0.005;
