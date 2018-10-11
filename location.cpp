@@ -10,8 +10,8 @@ std::vector<std::vector<size_t>> getAdjacencyMatrix(size_t POPULATION_SIZE, uint
   std::vector<std::vector<size_t>> location_map;
   location_map.resize(POPULATION_SIZE);
 
-  unsigned int half = SIMULATE_LOCATION / 2;
-  unsigned int second_half;
+  int half = SIMULATE_LOCATION / 2;
+  int second_half;
 
   if(SIMULATE_LOCATION % 2) { second_half = (half + 1); }
   else { second_half = half; }

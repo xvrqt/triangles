@@ -117,11 +117,11 @@ int main(int argc, char ** argv)
 			std::copy(start_index, end_index, a_t.begin());
 			
 			/* Create the thread */
-			threads.push_back(std::thread([](std::vector<Artist *> const & v) {
+			threads.push_back(std::thread([force_rescore](std::vector<Artist *> const & v) {
 				for(auto & a : v)
 				{
 					/* Don't alter / rescore clones */
-					if(a->isClone() && CLONE_ELITES) { continue; }
+					if(CLONE_ELITES && a->isClone() && !force_rescore)  { continue; }
 					else 
 					{
 						a->crossover();
