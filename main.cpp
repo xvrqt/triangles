@@ -74,7 +74,7 @@ int main(int argc, char ** argv)
 	bool force_rescore = true;
 	
 	/* The best fitness we've seen thus far */
-	double best_fitness = std::numeric_limits<double>::max();
+	double best_fitness = 0;
 
 	/* The number of processors available to us will determine how many threads
 	   we will want to create.
@@ -141,7 +141,7 @@ int main(int argc, char ** argv)
 
 		/* Sort the artists from best to worst */
 		std::sort(artists.begin(), artists.end(), [](const Artist * a, const Artist * b) -> bool { 
-        	return (a->getFitness() < b->getFitness()); 
+        	return (a->getFitness() > b->getFitness()); 
     	});
 
 		/* Calculate the average fitness & std dev of the artists */
@@ -218,7 +218,7 @@ int main(int argc, char ** argv)
 
 		/* Check if this artist has the best fitness seen so far */
 		double this_gen_best_fitness = artists[0]->getFitness();
-		if(this_gen_best_fitness < best_fitness)
+		if(this_gen_best_fitness > best_fitness)
 		{
 			best_fitness = this_gen_best_fitness;
 			num_gens_no_improvement = 0;
@@ -227,7 +227,7 @@ int main(int argc, char ** argv)
 		if(has_made_improvement) { num_gens_no_improvement++; }
 
 		/* Print out the best fitness each round */
-		std::cout << this_gen_best_fitness << std::endl;
+		std::cout << this_gen_best_fitness << "\t" << avg_fitness << "\t" << std_dev << "\t" << (number_of_generations_run * POPULATION_SIZE) << std::endl;
 
 		/* Check if we need to increase the number of triangles allowed to be expressed */
 		size_t num_triangles = (Artist::getExpressionLimit() > GENOME_LENGTH) ? GENOME_LENGTH : Artist::getExpressionLimit();

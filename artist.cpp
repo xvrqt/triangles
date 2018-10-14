@@ -197,7 +197,8 @@ Artist::Artist()
   }
 
   /* Set the fitness as high as possible to ensure it's replaced. */
-  fitness = std::numeric_limits<double>::max();
+  // fitness = std::numeric_limits<double>::max();
+  fitness = 0;
   expected_reproduction = 1.0; /* This will be overwritten later */
 
   /* Sets the location index */
@@ -223,7 +224,8 @@ Artist::Artist(const Artist &a, const Artist &b)
   memcpy(chromosome.recessive, b.chromosome.recessive, Artist::genome_length);
 
   /* Set the fitness as high as possible to ensure it's replaced. */
-  fitness = std::numeric_limits<double>::max();
+  // fitness = std::numeric_limits<double>::max();
+  fitness = 0;
   expected_reproduction = 1.0; /* This will be overwritten later */
 
   /* Copy A's location index. Don't increment. */
@@ -406,7 +408,8 @@ void Artist::score()
   Magick::Image * canvas = draw();
   
   /* Compare the average pixel error to the original */
-  fitness = canvas->compare(Artist::source_copy, Magick::RootMeanSquaredErrorMetric);
+  double rmse = canvas->compare(Artist::source_copy, Magick::RootMeanSquaredErrorMetric);
+  fitness = 1 / rmse;
 
   /* Free the memory */
   delete canvas;
@@ -446,10 +449,10 @@ Magick::Image * Artist::draw()
       Triangle const & tri_dom = dominant[i];
       Triangle const & tri_rec = recessive[i];
       
-      Triangle tri = (tri_dom.visible >= tri_rec.visible) ? tri_dom : tri_rec;
+      Triangle tri = tri_dom.visible ? tri_dom : tri_rec;
       
       /* If both triangles were visibilty 0; draw neither */
-      if(tri.visible == 0) { continue; }
+      if(tri.visible) { continue; }
       
       /* Translate the coordinates */
       Magick::CoordinateList coordinates;
@@ -537,7 +540,7 @@ void Artist::setReproductionProportion(double avg_fitness, double std_dev)
   if(std_dev == 0) { expected_reproduction = 1; }
   else 
   {
-    expected_reproduction = 1 - ((fitness - avg_fitness) / (2 * std_dev));
+    expected_reproduction = 1 + ((fitness - avg_fitness) / (2 * std_dev));
     /* Everyone has a smöl chance to make it */
     if(expected_reproduction <= 0) { expected_reproduction = 0.1; }
   }

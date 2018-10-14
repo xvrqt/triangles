@@ -6,7 +6,7 @@
 typedef u_int8_t uint8_t;
 
 /*
-[xxxxxxxxxx][yyyyyyyyyy][xxxxxxxxxx][yyyyyyyyyy][xxxxxxxxxx][yyyyyyyyyy]|[rrrrrrrr][gggggggg][bbbbbbbb]|[aaaaaaaa]|[vvvvvvvv]
+[xxxxxxxxxx][yyyyyyyyyy][xxxxxxxxxx][yyyyyyyyyy][xxxxxxxxxx][yyyyyyyyyy]|[rrrrrrrr][gggggggg][bbbbbbbb]|[aaaaaaa]|[v]
 [                                points                                ]|[           colors           ]|[opacity ]|[visible ]
 
 Total size: 11 bytes.
@@ -30,10 +30,10 @@ struct __attribute__((__packed__)) Triangle {
   uint8_t r : 8;
   uint8_t g : 8;
   uint8_t b : 8;
-  uint8_t a : 8;
+  uint8_t a : 7;
 
   /* If visible */
-  uint8_t visible : 8;
+  bool visible : 1;
 };
 
 /* Mark important offsets */
