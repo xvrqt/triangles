@@ -2,6 +2,8 @@
 #include <Magick++.h> 
 
 #include <thread>
+#include <fstream>
+#include <iostream>
 #include <algorithm>
 
 #include <stdlib.h>

@@ -10,6 +10,29 @@ int main(int argc, char ** argv)
 	/* Allows use of ImageMagick */
 	Magick::InitializeMagick(*argv);
 
+    /* Open a file to write the results */
+    std::ofstream output_file;
+
+    std::string image_path(IMAGE_PATH);
+    std::string genome_length(std::to_string(GENOME_LENGTH));
+    std::string pop_size(std::to_string(POPULATION_SIZE));
+    std::string elitism(std::to_string(ELITISM));
+    std::string seed(std::to_string(RANDOM_SEED));
+    std::string xover(std::to_string(XOVER_CHANCE));
+    std::string mrate(std::to_string(MUTATION_RATE));
+    std::string loc(std::to_string(SIMULATE_LOCATION));
+
+    std::string file_name = image_path;
+    file_name += "_" + genome_length;
+    file_name += "_" + pop_size;
+    file_name += "_" + elitism;
+    file_name += "_" + seed;
+    file_name += "_" + xover;
+    file_name += "_" + mrate;
+    file_name += "_" + loc;
+    
+    output_file.open("output/" + file_name + ".tsv");
+
 	/* Initialize Artist settings with runtime parameters. This sets static
 	   member variables so we can use the default constructor for Artists.
 	 */
@@ -227,13 +250,15 @@ int main(int argc, char ** argv)
 		if(has_made_improvement) { num_gens_no_improvement++; }
 
 		/* Print out the best fitness each round */
-		std::cout << this_gen_best_fitness << "\t" << avg_fitness << "\t" << std_dev << "\t" << (number_of_generations_run * POPULATION_SIZE) << std::endl;
+		std::cout << (number_of_generations_run * POPULATION_SIZE) << "\t" << this_gen_best_fitness << "\t" << avg_fitness << "\t" << std_dev << "\n";
+	    output_file << (number_of_generations_run * POPULATION_SIZE) << "\t" << this_gen_best_fitness << "\t" << avg_fitness << "\t" << std_dev << "\n";
 
 		/* Check if we need to increase the number of triangles allowed to be expressed */
 		size_t num_triangles = (Artist::getExpressionLimit() > GENOME_LENGTH) ? GENOME_LENGTH : Artist::getExpressionLimit();
+        /*
 		if(number_of_generations_run % 50 == 0)
 		{
-			/* Print out the best image from that number of triangles */
+			//  Print out the best image from that number of triangles 
 			Magick::Image * best_image = artists[0]->draw();
 			std::string num_gens = std::to_string(number_of_generations_run);
 			std::string num_tri = std::to_string(num_triangles);
@@ -241,6 +266,7 @@ int main(int argc, char ** argv)
 			best_image->write("output/" + num_gens + "_" + num_tri + "_" + best_fit + ".png");
 			delete best_image;
 		}
+        */
 
 		/* Reset the count, allow one more triangle */
 		if(OAAT_MODE && num_gens_no_improvement >= OAAT_MODE)
@@ -259,5 +285,8 @@ int main(int argc, char ** argv)
 		}
 		artists.clear();
 		artists = next_generation;
+        if((number_of_generations_run * POPULATION_SIZE) >= 50000) { break; }
 	}
+
+    output_file.close();
 }
