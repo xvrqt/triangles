@@ -15,6 +15,10 @@ output/
 !test_resources/image.png
 !image.png
 
+!transparent.png
+!drawing.png
+!picture.png
+
 # Binaries
 triangles
 test
